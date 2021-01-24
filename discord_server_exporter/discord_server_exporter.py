@@ -393,10 +393,16 @@ def dump_server(guild: discord.Guild) -> dict:
     res["icon_url"] = str(guild.icon_url)
     res["voice_region"] = guild.region.value
     if guild.afk_channel:
-        logging.info(f"No AFK channel present in '{guild.name}'; omitting")
         res["inactive_channel"] = str(guild.afk_channel.id)
         res["inactive_timeout"] = guild.afk_timeout
-    res["system_message_channel"] = str(guild.system_channel.id)
+    else:
+        logging.info(f"No AFK channel present in '{guild.name}'; omitting")
+
+    if guild.system_channel:
+        res["system_message_channel"] = str(guild.system_channel.id)
+    else:
+        logging.info(f"No system channel present in '{guild.name}'; omitting")
+
     res["join_broadcast"] = guild.system_channel_flags.join_notifications
     res["boost_broadcast"] = guild.system_channel_flags.premium_subscriptions
     res["default_notifications"] = bool(guild.default_notifications.value)

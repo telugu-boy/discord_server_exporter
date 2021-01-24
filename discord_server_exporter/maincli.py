@@ -17,6 +17,7 @@
 """
 
 import os
+import re
 import json
 import logging
 
@@ -27,23 +28,27 @@ bot = commands.Bot(command_prefix=">", description="")
 
 import discord_server_exporter as dse
 
-
-@bot.command()
-async def req_dump(ctx):
-    await ctx.send("sent")
-
-
 guildid = None
 # Events
 @bot.event
 async def on_ready():
+    logging.info("Bot started")
+
     if not os.path.exists("my_servers"):
         os.mkdir("my_servers")
+
+    servers = []
     for gld in bot.guilds:
         biswas = dse.dump_server(gld)
-        with open(f"my_servers/{biswas['name']}.json", "w") as f:
+        servers.append(biswas)
+        srv_name_clean = re.sub(r"\W+", "", biswas["name"])
+        with open(f"my_servers/{srv_name_clean}.json", "w") as f:
             f.write(json.dumps(biswas))
-    logging.info("Bot started")
+
+    with open(f"my_servers/{bot.id}.json", "w") as f:
+        f.write(json.dumps(servers))
+
+    logging.info("All OK")
 
 
 @bot.listen()
