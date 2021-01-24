@@ -1,4 +1,4 @@
-'''
+"""
     Discord Server Exporter - exports and import servers as json
     Copyright (C) 2021 telugu_boy
 
@@ -14,19 +14,20 @@
 
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
-'''
+"""
 
 # This is the CLI for Discord Server Exporter.
-import discord
 from discord.ext import commands
-import datetime
-bot = commands.Bot(command_prefix='>', description="")
+
+bot = commands.Bot(command_prefix=">", description="")
 
 import discord_server_exporter as dse
 
+
 @bot.command()
 async def req_dump(ctx):
-    await ctx.send('sent')
+    await ctx.send("sent")
+
 
 guildid = None
 # Events
@@ -41,8 +42,9 @@ async def on_ready():
 async def on_message(message):
     print(message.content)
 
+
 if __name__ == "__main__":
     with open("token.txt") as f:
-        tok, id = map(lambda a: a.strip(), f.readlines())
-    guildid = int(id)
+        tok, gid = map(lambda a: a.strip(), f.readlines())
+    guildid = int(gid)
     bot.run(tok)

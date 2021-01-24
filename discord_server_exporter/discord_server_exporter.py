@@ -1,4 +1,4 @@
-'''
+"""
     Discord Server Exporter - exports and import servers as json
     Copyright (C) 2021 telugu_boy
 
@@ -14,18 +14,20 @@
 
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
-'''
+"""
 
 import discord
 import json
 
-'''
+"""
 Return a json object representing a single server.
 The schema is in schemas.py
 
 Arguments:
     guild -- a discord.py guild object
-'''
+"""
+
+
 async def dump_server_as_json(guild: discord.Guild):
 
     print("Starting dump")

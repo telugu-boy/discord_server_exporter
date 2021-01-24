@@ -1,0 +1,15 @@
+{
+  "title": "Discord emoji",
+  "description": "Represents a single emoji",
+  "type": "object",
+  "properties": {
+    "name": {
+      "description": "The name of the emoji",
+      "type": "string"
+    },
+    "url": {
+      "description": "The URL to the emoji",
+      "type": "string"
+    }
+  }
+}

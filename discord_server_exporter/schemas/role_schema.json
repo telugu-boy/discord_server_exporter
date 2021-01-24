@@ -1,0 +1,29 @@
+{
+  "title": "Discord role",
+  "description": "Represents a single role",
+  "type": "object",
+  "properties": {
+    "name": {
+      "description": "The name of the role",
+      "type": "string"
+    },
+    "color": {
+      "description": "The colour of the role, represented as a 24 bit int",
+      "type": "integer",
+      "minimum": 0,
+      "exclusiveMaximum": 16777216
+    },
+    "mentionable": {
+      "description": "Whether or not the role is mentionable",
+      "type": "boolean",
+    },
+    "position": {
+      "description": "The position of the role in the heirarchy",
+      "type": "integer",
+      "minimum": 1,
+      "exclusiveMaximum": 250
+    },
+    "permission_value": { "$ref": "permission_value_schema.json#/" }
+  },
+  "required": [ "name", "color", "mentionable", "position" ]
+}
