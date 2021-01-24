@@ -18,6 +18,8 @@
 
 # This is the CLI for Discord Server Exporter.
 from discord.ext import commands
+import json
+import jsonschema
 
 bot = commands.Bot(command_prefix=">", description="")
 
@@ -34,7 +36,16 @@ guildid = None
 @bot.event
 async def on_ready():
     gld = bot.get_guild(guildid)
-    biswas = await dse.dump_server_as_json(gld)
+    biswas = await dse.dump_roles(gld)
+
+    with open('schemas/role_schema.json') as f:
+        role_schema = json.load(f)
+
+    print(role_schema)
+
+    for role in biswas:
+        jsonschema.validate(role, schema = role_schema)
+
     print("Ready '-'")
 
 

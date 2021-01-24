@@ -15,7 +15,7 @@
     },
     "mentionable": {
       "description": "Whether or not the role is mentionable",
-      "type": "boolean",
+      "type": "boolean"
     },
     "position": {
       "description": "The position of the role in the heirarchy",
