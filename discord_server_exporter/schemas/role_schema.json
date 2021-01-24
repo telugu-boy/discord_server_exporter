@@ -23,7 +23,7 @@
       "minimum": 1,
       "exclusiveMaximum": 250
     },
-    "permission_value": { "$ref": "permission_value_schema.json#/" }
+    "permission_value": { "$ref": "permission_value_schema.json#/properties" }
   },
   "required": [ "name", "color", "mentionable", "position" ]
 }

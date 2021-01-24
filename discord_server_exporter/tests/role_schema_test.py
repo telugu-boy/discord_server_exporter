@@ -16,37 +16,26 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-# This is the CLI for Discord Server Exporter.
-from discord.ext import commands
+import os
 import json
 import jsonschema
 import logging
 
-import os
-
-bot = commands.Bot(command_prefix=">", description="")
-
+import discord
 import discord_server_exporter as dse
 
+async def test_role_schema_validation(gld: discord.Guild):
+    logging.info("Running role schema validation test")
 
-@bot.command()
-async def req_dump(ctx):
-    await ctx.send("sent")
+    biswas = await dse.dump_roles(gld)
 
+    role_schema_path = "schemas/role_schema.json"
+    with open(role_schema_path) as f:
+        role_schema = json.load(f)
 
-guildid = None
-# Events
-@bot.event
-async def on_ready():
-    logging.info("Bot started")
+    resolver = jsonschema.RefResolver("file:///" + os.getcwd() + "/schemas/", role_schema)
 
-@bot.listen()
-async def on_message(message):
-    print(message.content)
+    for role in biswas:
+        jsonschema.validate(role, role_schema, resolver=resolver)
 
-
-if __name__ == "__main__":
-    with open("token.txt") as f:
-        tok, gid = map(lambda a: a.strip(), f.readlines())
-    guildid = int(gid)
-    bot.run(tok)
+    logging.info("OK")

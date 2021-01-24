@@ -16,37 +16,39 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-# This is the CLI for Discord Server Exporter.
-from discord.ext import commands
-import json
-import jsonschema
 import logging
 
-import os
+from . import role_schema_test, emoji_schema_test
+from discord.ext import commands
+
+import json
+import pathlib
+import jsonschema
+
+import discord
+import discord_server_exporter as dse
 
 bot = commands.Bot(command_prefix=">", description="")
 
-import discord_server_exporter as dse
-
-
-@bot.command()
-async def req_dump(ctx):
-    await ctx.send("sent")
-
-
 guildid = None
-# Events
 @bot.event
 async def on_ready():
     logging.info("Bot started")
-
-@bot.listen()
-async def on_message(message):
-    print(message.content)
-
+    gld = bot.get_guild(guildid)
+    await role_schema_test.test_role_schema_validation(gld)
+    await emoji_schema_test.test_emoji_schema_validation(gld)
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
+
+    logging.info("Running all tests")
+
+    print(pathlib.Path().absolute())
+
+    # Getting creds and target test server
     with open("token.txt") as f:
         tok, gid = map(lambda a: a.strip(), f.readlines())
     guildid = int(gid)
+
     bot.run(tok)
+

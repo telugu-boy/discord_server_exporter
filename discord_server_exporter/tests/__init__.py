@@ -16,37 +16,4 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-# This is the CLI for Discord Server Exporter.
-from discord.ext import commands
-import json
-import jsonschema
-import logging
-
-import os
-
-bot = commands.Bot(command_prefix=">", description="")
-
-import discord_server_exporter as dse
-
-
-@bot.command()
-async def req_dump(ctx):
-    await ctx.send("sent")
-
-
-guildid = None
-# Events
-@bot.event
-async def on_ready():
-    logging.info("Bot started")
-
-@bot.listen()
-async def on_message(message):
-    print(message.content)
-
-
-if __name__ == "__main__":
-    with open("token.txt") as f:
-        tok, gid = map(lambda a: a.strip(), f.readlines())
-    guildid = int(gid)
-    bot.run(tok)
+# init stub for module
