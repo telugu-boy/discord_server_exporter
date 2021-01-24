@@ -40,6 +40,7 @@ def test_server_schema_validation(gld: discord.Guild):
 
     jsonschema.validate(server, server_schema, resolver=resolver)
 
-    with open("trilunz.json", "w") as f: f.write(json.dumps(server))
+    with open("trilunz.json", "w") as f:
+        f.write(json.dumps(server))
 
     logging.info("OK")
