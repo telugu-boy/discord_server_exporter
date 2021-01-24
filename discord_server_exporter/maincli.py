@@ -24,9 +24,15 @@ import logging
 # This is the CLI for Discord Server Exporter.
 from discord.ext import commands
 
+import discord_server_exporter as dse
+
 bot = commands.Bot(command_prefix=">", description="")
 
-import discord_server_exporter as dse
+LOG_FILENAME = "export_log.log"
+LOG_LEVEL = logging.INFO
+LOG_FILE_MODE = "w"
+LOG_FORMAT = "[%(levelname)s] %(asctime)s %(name)s: %(message)s"
+LOG_DATE_FORMAT = "[%Y/%m/%d %H:%M:%S]"
 
 guildid = None
 # Events
@@ -45,19 +51,17 @@ async def on_ready():
         with open(f"my_servers/{srv_name_clean}.json", "w") as f:
             f.write(json.dumps(biswas))
 
-    with open(f"my_servers/{bot.id}.json", "w") as f:
+    with open(f"my_servers/{bot.user.id}.json", "w") as f:
         f.write(json.dumps(servers))
 
     logging.info("All OK")
 
-
-@bot.listen()
-async def on_message(message):
-    print(message.content)
-
-
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)
+    logging.basicConfig(
+        level = LOG_LEVEL,
+        format = LOG_FORMAT,
+        datefmt = LOG_DATE_FORMAT
+    )
 
     with open("token.txt") as f:
         tok, gid = map(lambda a: a.strip(), f.readlines())
