@@ -24,17 +24,27 @@ import logging
 import discord
 import discord_server_exporter as dse
 
-async def test_role_schema_validation(gld: discord.Guild):
-    logging.info("Running role schema validation test")
 
-    biswas = await dse.dump_roles(gld)
+def test_role_schema_validation(gld: discord.Guild):
+    logging.info("Running role schema validation test")
 
     role_schema_path = "schemas/role_schema.json"
     with open(role_schema_path) as f:
         role_schema = json.load(f)
 
-    resolver = jsonschema.RefResolver("file:///" + os.getcwd() + "/schemas/", role_schema)
+    resolver = jsonschema.RefResolver(
+        "file:///" + os.getcwd() + "/schemas/", role_schema
+    )
 
+    biswas = dse.dump_roles(gld)
+
+    for role in biswas:
+        jsonschema.validate(role, role_schema, resolver=resolver)
+
+    logging.info("OK")
+    logging.info("Validate roles foregoing permissions export")
+
+    biswas = dse.dump_roles(gld, False)
     for role in biswas:
         jsonschema.validate(role, role_schema, resolver=resolver)
 

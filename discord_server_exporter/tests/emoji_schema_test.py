@@ -24,16 +24,19 @@ import logging
 import discord
 import discord_server_exporter as dse
 
-async def test_emoji_schema_validation(gld: discord.Guild):
-    logging.info("Running emoji schema validation test")
 
-    biswas = await dse.dump_roles(gld)
+def test_emoji_schema_validation(gld: discord.Guild):
+    logging.info("Running emoji schema validation test")
 
     emoji_schema_path = "schemas/emoji_schema.json"
     with open(emoji_schema_path) as f:
         emoji_schema = json.load(f)
 
-    resolver = jsonschema.RefResolver("file:///" + os.getcwd() + "/schemas/", emoji_schema)
+    resolver = jsonschema.RefResolver(
+        "file:///" + os.getcwd() + "/schemas/", emoji_schema
+    )
+
+    biswas = dse.dump_emojis(gld)
 
     for emoji in biswas:
         jsonschema.validate(emoji, emoji_schema, resolver=resolver)

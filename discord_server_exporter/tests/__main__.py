@@ -18,7 +18,7 @@
 
 import logging
 
-from . import role_schema_test, emoji_schema_test
+from . import role_schema_test, emoji_schema_test, text_channel_schema_test
 from discord.ext import commands
 
 import json
@@ -31,12 +31,16 @@ import discord_server_exporter as dse
 bot = commands.Bot(command_prefix=">", description="")
 
 guildid = None
+
+
 @bot.event
 async def on_ready():
     logging.info("Bot started")
     gld = bot.get_guild(guildid)
-    await role_schema_test.test_role_schema_validation(gld)
-    await emoji_schema_test.test_emoji_schema_validation(gld)
+    role_schema_test.test_role_schema_validation(gld)
+    emoji_schema_test.test_emoji_schema_validation(gld)
+    text_channel_schema_test.test_text_channel_schema_validation(gld)
+
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
@@ -51,4 +55,3 @@ if __name__ == "__main__":
     guildid = int(gid)
 
     bot.run(tok)
-

@@ -1,0 +1,28 @@
+{
+  "title": "Discord text channel",
+  "description": "Represents a single text channel",
+  "type": "object",
+  "properties": {
+    "name": {
+      "description": "The name of the channel",
+      "type": "string"
+    },
+    "slowmode": {
+      "description": "The slowmode cooldown for this channel in seconds (0 for none)",
+      "maximum": 21600,
+      "minimum": 0,
+      "type": "integer"
+    },
+    "role_permission_overrides": {
+      "description": "An array of role permission overrides",
+      "type": "array",
+      "items": { "$ref": "permission_override_schemas.json#/role_permission_override_schema/properties" }
+    },
+    "user_permission_overrides": {
+      "description": "An array of role permission overrides",
+      "items": { "$ref": "permission_override_schemas.json#/user_permission_override_schema/properties" },
+      "type": "array"
+    }
+  },
+  "required": [ "name", "slowmode" ]
+}

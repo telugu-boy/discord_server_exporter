@@ -38,7 +38,10 @@ guildid = None
 # Events
 @bot.event
 async def on_ready():
+    gld = bot.get_guild(guildid)
+    biswas = await dse.dump_text_channels(gld)
     logging.info("Bot started")
+
 
 @bot.listen()
 async def on_message(message):
@@ -46,6 +49,8 @@ async def on_message(message):
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
+
     with open("token.txt") as f:
         tok, gid = map(lambda a: a.strip(), f.readlines())
     guildid = int(gid)
