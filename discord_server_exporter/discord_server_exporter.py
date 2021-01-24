@@ -16,8 +16,9 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+import logging
+
 import discord
-import json
 
 """
 Maps a role to a dictionary that conforms to the role schema.
@@ -28,6 +29,7 @@ Arguments:
 
 
 def conv_role_obj(role: discord.Role, export_perms=True) -> dict:
+    logging.info(f"Dumping role '{role.name}' for server '{role.guild.name}'")
     res = {}
     res["name"] = role.name
     # this is the colour integer
@@ -38,6 +40,9 @@ def conv_role_obj(role: discord.Role, export_perms=True) -> dict:
     res["id"] = str(role.id)
     # this is the permission integer
     if export_perms:
+        logging.info(
+            f"Dumping role permissions for role '{role.name}' in '{role.guild.name}'"
+        )
         res["permission_value"] = role.permissions.value
     return res
 
@@ -52,6 +57,7 @@ Arguments:
 
 
 def dump_roles(guild: discord.Guild, export_perms=True) -> list:
+    logging.info(f"Dumping roles for server '{guild.name}'")
     res = []
     # this returns all roles in order not including @everyone.
     for role in guild.roles:
@@ -69,6 +75,7 @@ Arguments:
 
 
 def conv_emoji_obj(emoji: discord.Emoji) -> dict:
+    logging.info(f"Dumping emoji '{emoji.name}' for server '{emoji.guild.name}'")
     res = {}
     res["name"] = emoji.name
     res["url"] = str(emoji.url)
@@ -85,6 +92,7 @@ Arguments:
 
 
 def dump_emojis(guild: discord.Guild) -> list:
+    logging.info(f"Dumping emojis for server '{guild.name}'")
     res = []
     for emoji in guild.emojis:
         res.append(conv_emoji_obj(emoji))
@@ -105,6 +113,9 @@ Arguments:
 
 
 def get_permission_overrides(channel: discord.abc.ChannelType) -> dict:
+    logging.info(
+        f"Dumping permission overrides for '{channel.name}' in '{channel.guild.name}'"
+    )
     # roles: list of tuples (role position, permission override list)
     # users: list of tuples (user ID, permission override list)
     res = {"roles": [], "users": []}
@@ -123,11 +134,11 @@ def get_permission_overrides(channel: discord.abc.ChannelType) -> dict:
             if perm_status is not None:
                 permission_override_list[perm_name] = perm_status
 
-        if type(entity) == discord.Role:
+        if isinstance(entity, discord.Role):
             res["roles"].append(
                 {"role_id": entity.id, "permissions": permission_override_list}
             )
-        elif type(entity) == discord.User:
+        elif isinstance(entity, discord.User):
             res["users"].append(
                 {"user_id": entity.id, "permissions": permission_override_list}
             )
@@ -146,6 +157,7 @@ Arguments:
 def conv_text_channel_obj(
     channel: discord.TextChannel, export_role_overrides=True, export_user_overrides=True
 ):
+    logging.info(f"Dumping text channel '{channel.name}' in '{channel.guild.name}'")
     res = {}
     res["name"] = channel.name
     res["slowmode"] = channel.slowmode_delay
@@ -155,8 +167,14 @@ def conv_text_channel_obj(
 
     perms = get_permission_overrides(channel)
     if export_role_overrides:
+        logging.info(
+            f"Dumping role permission overrides for text channel '{channel.name}' in '{channel.guild.name}'"
+        )
         res["role_permission_overrides"] = perms["roles"]
     if export_user_overrides:
+        logging.info(
+            f"Dumping user permission overrides for text channel '{channel.name}' in '{channel.guild.name}'"
+        )
         res["user_permission_overrides"] = perms["users"]
 
     return res
@@ -174,6 +192,7 @@ Arguments:
 def dump_text_channels(
     guild: discord.Guild, export_role_overrides=True, export_user_overrides=True
 ) -> list:
+    logging.info(f"Dumping text channels for server '{guild.name}'")
     res = []
     for channel in guild.text_channels:
         res.append(
@@ -195,6 +214,7 @@ def conv_voice_channel_obj(
     export_role_overrides=True,
     export_user_overrides=True,
 ):
+    logging.info(f"Dumping voice channel '{channel.name}' in '{channel.guild.name}'")
     res = {}
     res["name"] = channel.name
     res["bitrate"] = channel.bitrate
@@ -203,8 +223,14 @@ def conv_voice_channel_obj(
 
     perms = get_permission_overrides(channel)
     if export_role_overrides:
+        logging.info(
+            f"Dumping role permission overrides for voice channel '{channel.name}' in '{channel.guild.name}'"
+        )
         res["role_permission_overrides"] = perms["roles"]
     if export_user_overrides:
+        logging.info(
+            f"Dumping user permission overrides for voice channel '{channel.name}' in '{channel.guild.name}'"
+        )
         res["user_permission_overrides"] = perms["users"]
 
     return res
@@ -222,6 +248,7 @@ Arguments:
 def dump_voice_channels(
     guild: discord.Guild, export_role_overrides=True, export_user_overrides=True
 ) -> list:
+    logging.info(f"Dumping voice channels for server '{guild.name}'")
     res = []
     for channel in guild.voice_channels:
         res.append(
@@ -247,10 +274,15 @@ def conv_category_obj(
     export_role_overrides=True,
     export_user_overrides=True,
 ):
+    guild = category.guild
+    logging.info(f"Dumping category '{category.name}' for server '{guild.name}'")
     res = {}
     res["name"] = category.name
 
     if export_text_channels:
+        logging.info(
+            f"Dumping text channels for category '{category.name}' in '{category.guild.name}'"
+        )
         res["text_channels"] = []
         for channel in category.text_channels:
             res["text_channels"].append(
@@ -260,6 +292,9 @@ def conv_category_obj(
             )
 
     if export_voice_channels:
+        logging.info(
+            f"Dumping voice channels for category '{category.name}' in '{category.guild.name}'"
+        )
         res["voice_channels"] = []
         for channel in category.voice_channels:
             res["voice_channels"].append(
@@ -270,8 +305,14 @@ def conv_category_obj(
 
     perms = get_permission_overrides(category)
     if export_role_overrides:
+        logging.info(
+            f"Dumping role overrides for category '{category.name}' in '{guild.name}'"
+        )
         res["role_permission_overrides"] = perms["roles"]
     if export_user_overrides:
+        logging.info(
+            f"Dumping user overrides for category '{category.name}' in '{guild.name}'"
+        )
         res["user_permission_overrides"] = perms["users"]
 
     return res
@@ -294,31 +335,34 @@ def dump_categories(
     export_role_overrides=True,
     export_user_overrides=True,
 ) -> list:
+
     res = []
 
     if len(guild.by_category()) <= 0:
         return res
 
     if uncategorized:
+        logging.info(f"Dumping uncategorized channels for server '{guild.name}'")
         dummy_cat = {}
         dummy_cat["name"] = ""
         dummy_cat["text_channels"] = []
         dummy_cat["voice_channels"] = []
         for channel in guild.by_category()[0]:
-            if type(channel) == discord.TextChannel:
-                dummy_cat.append(
+            if isinstance(channel, discord.TextChannel):
+                dummy_cat["text_channels"].append(
                     conv_text_channel_obj(
                         channel, export_role_overrides, export_user_overrides
                     )
                 )
-            elif type(channel) == discord.VoiceChannel:
-                dummy_cat.append(
+            elif isinstance(channel, discord.VoiceChannel):
+                dummy_cat["voice_channels"].append(
                     conv_voice_channel_obj(
                         channel, export_role_overrides, export_user_overrides
                     )
                 )
         res.append(dummy_cat)
 
+    logging.info(f"Dumping categories for server '{guild.name}'")
     for category in guild.categories:
         res.append(
             conv_category_obj(
@@ -342,12 +386,14 @@ Arguments:
 
 
 def dump_server(guild: discord.Guild) -> dict:
+    logging.info(f"Dumping server '{guild.name}'")
     res = {}
 
     res["name"] = guild.name
     res["icon_url"] = str(guild.icon_url)
     res["voice_region"] = guild.region.value
     if guild.afk_channel:
+        logging.info(f"No AFK channel present in '{guild.name}'; omitting")
         res["inactive_channel"] = str(guild.afk_channel.id)
         res["inactive_timeout"] = guild.afk_timeout
     res["system_message_channel"] = str(guild.system_channel.id)

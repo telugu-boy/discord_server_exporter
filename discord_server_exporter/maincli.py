@@ -16,13 +16,12 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-# This is the CLI for Discord Server Exporter.
-from discord.ext import commands
+import os
 import json
-import jsonschema
 import logging
 
-import os
+# This is the CLI for Discord Server Exporter.
+from discord.ext import commands
 
 bot = commands.Bot(command_prefix=">", description="")
 
@@ -38,8 +37,12 @@ guildid = None
 # Events
 @bot.event
 async def on_ready():
-    gld = bot.get_guild(guildid)
-    biswas = dse.dump_server(gld)
+    if not os.path.exists("my_servers"):
+        os.mkdir("my_servers")
+    for gld in bot.guilds:
+        biswas = dse.dump_server(gld)
+        with open(f"my_servers/{biswas['name']}.json", "w") as f:
+            f.write(json.dumps(biswas))
     logging.info("Bot started")
 
 
@@ -54,4 +57,4 @@ if __name__ == "__main__":
     with open("token.txt") as f:
         tok, gid = map(lambda a: a.strip(), f.readlines())
     guildid = int(gid)
-    bot.run(tok)
+    bot.run(tok, bot=False)

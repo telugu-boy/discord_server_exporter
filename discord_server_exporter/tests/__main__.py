@@ -17,6 +17,9 @@
 """
 
 import logging
+import pathlib
+
+from discord.ext import commands
 
 from . import (
     role_schema_test,
@@ -26,14 +29,6 @@ from . import (
     category_schema_test,
     server_schema_test,
 )
-from discord.ext import commands
-
-import json
-import pathlib
-import jsonschema
-
-import discord
-import discord_server_exporter as dse
 
 bot = commands.Bot(command_prefix=">", description="")
 
