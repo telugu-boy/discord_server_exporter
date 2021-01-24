@@ -1,0 +1,69 @@
+{
+  "title": "Discord server",
+  "description": "Represents a single server",
+  "type": "object",
+  "properties": {
+    "name": {
+      "description": "The name of the server",
+      "type": "string"
+    },
+    "icon_url": {
+      "description": "The url of the icon of the server",
+      "type": "string"
+    },
+    "voice_region": {
+      "description": "The voice region of the server",
+      "type": "string"
+    },
+    "inactive_channel": {
+      "description": "The afk voice channel of the server",
+      "type": "string"
+    },
+    "inactive_timeout": {
+      "description": "Timeout to be moved to afk channel",
+      "maximum": 3600,
+      "minimum": 300,
+      "type": "integer"
+    },
+    "system_message_channel": {
+      "description": "Where member join and nitro boost messages will go",
+      "type": "string"
+    },
+    "join_broadcast": {
+      "description": "Broadcast on member join",
+      "type": "boolean"
+    },
+    "boost_broadcast": {
+      "description": "Broastcast on server nitro boost",
+      "type": "boolean"
+    },
+    "default_notifications": {
+      "description": "True for only @mentions, true for all messages",
+      "type": "boolean"
+    },
+    "verification_level": {
+      "description": "Verification level may be: none 0, low 1, medium 2, high 3, extreme 4",
+      "type": "integer"
+    },
+    "content_filter": {
+      "description": "Content filter may be: disabled 0, no role 1 or all members 2",
+      "type": "integer"
+    },
+    "emojis": {
+      "description": "The emojis of this server",
+      "type": "array",
+      "items": { "$ref": "emoji_schema.json#/properties" }
+    },
+    "roles": {
+      "description": "The roles of this server",
+      "type": "array",
+      "items": { "$ref": "role_schema.json#/properties" }
+    },
+    "categories": {
+      "description": "The categories of this server",
+      "type": "array",
+      "items": { "$ref": "category_schema.json#/properties" }
+    }
+  },
+  "required": [ "name", "icon_url", "voice_region", "system_message_channel", "join_broadcast", "boost_broadcast", "default_notifications", "verification_level", "content_filter" ]
+}

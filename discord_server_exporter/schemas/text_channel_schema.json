@@ -13,6 +13,18 @@
       "minimum": 0,
       "type": "integer"
     },
+    "nsfw": {
+      "description": "True for NSFW channel, false otherwise",
+      "type": "boolean"
+    },
+    "news": {
+      "description": "True for news channel, false otherwise",
+      "type": "boolean"
+    },
+    "id": {
+      "description": "The ID of the channel. Used for identification purpose internally",
+      "type": "string"
+    },
     "role_permission_overrides": {
       "description": "An array of role permission overrides",
       "type": "array",

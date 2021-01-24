@@ -19,6 +19,10 @@
       "minimum": 0,
       "type": "integer"
     },
+    "id": {
+      "description": "The ID of the channel. Used for identification purpose internally",
+      "type": "string"
+    },
     "role_permission_overrides": {
       "description": "An array of role permission overrides",
       "type": "array",

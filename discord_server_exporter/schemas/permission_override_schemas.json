@@ -115,8 +115,8 @@
     "description": "Represents role permission settings for a channel or category",
     "type": "object",
     "properties": {
-      "role_position": {
-        "description": "The position of the role in the heirarchy. Used to identify the role",
+      "role_id": {
+        "description": "The role's ID",
         "type": "integer"
       },
       "permissions": { "$ref": "#/permission_override_list_schema/properties" }

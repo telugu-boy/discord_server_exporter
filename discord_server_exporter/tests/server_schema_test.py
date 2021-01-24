@@ -16,42 +16,30 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-# This is the CLI for Discord Server Exporter.
-from discord.ext import commands
+import os
 import json
 import jsonschema
 import logging
 
-import os
-
-bot = commands.Bot(command_prefix=">", description="")
-
+import discord
 import discord_server_exporter as dse
 
 
-@bot.command()
-async def req_dump(ctx):
-    await ctx.send("sent")
+def test_server_schema_validation(gld: discord.Guild):
+    logging.info("Running server schema validation test")
 
+    server_schema_path = "schemas/server_schema.json"
+    with open(server_schema_path) as f:
+        server_schema = json.load(f)
 
-guildid = None
-# Events
-@bot.event
-async def on_ready():
-    gld = bot.get_guild(guildid)
-    biswas = dse.dump_server(gld)
-    logging.info("Bot started")
+    resolver = jsonschema.RefResolver(
+        "file:///" + os.getcwd() + "/schemas/", server_schema
+    )
 
+    server = dse.dump_server(gld)
 
-@bot.listen()
-async def on_message(message):
-    print(message.content)
+    jsonschema.validate(server, server_schema, resolver=resolver)
 
+    with open("trilunz.json", "w") as f: f.write(json.dumps(server))
 
-if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)
-
-    with open("token.txt") as f:
-        tok, gid = map(lambda a: a.strip(), f.readlines())
-    guildid = int(gid)
-    bot.run(tok)
+    logging.info("OK")

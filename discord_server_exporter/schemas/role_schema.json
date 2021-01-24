@@ -23,6 +23,10 @@
       "minimum": 1,
       "exclusiveMaximum": 250
     },
+    "id": {
+      "description": "The ID of the role. Used for identification purpose internally",
+      "type": "string"
+    },
     "permission_value": { "$ref": "permission_value_schema.json#/properties" }
   },
   "required": [ "name", "color", "mentionable", "position" ]

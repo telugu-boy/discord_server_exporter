@@ -29,9 +29,11 @@ def conv_role_obj(role: discord.Role, export_perms=True) -> dict:
     res = {}
     res['name'] = role.name
     # this is the colour integer
+    # a value of 0 means transparent
     res['color'] = role.color.value
     res['mentionable'] = role.mentionable
     res['position'] = role.position
+    res['id'] = str(role.id)
     # this is the permission integer
     if export_perms:
         res['permission_value'] = role.permissions.value
@@ -81,7 +83,7 @@ def dump_emojis(guild: discord.Guild) -> list:
 Return the permission overrides for a text or voice channel.
 Structure:
     Dict:
-        "roles": [ dict of role position, permission override list ]
+        "roles": [ dict of role id, permission override list ]
         "users": [ dict of user id, permission override list ]
 The schema for permission override list is in the schemas folder, as with all other relevant structures
 
@@ -111,7 +113,7 @@ def get_permission_overrides(channel: discord.abc.ChannelType) -> dict:
                 permission_override_list[perm_name] = perm_status
 
         if type(entity) == discord.Role:
-            res['roles'].append({"role_position": entity.position, "permissions": permission_override_list})
+            res['roles'].append({"role_id": entity.id, "permissions": permission_override_list})
         elif type(entity) == discord.User:
             res['users'].append({"user_id": entity.id, "permissions": permission_override_list})
 
@@ -130,6 +132,9 @@ def conv_text_channel_obj(channel: discord.TextChannel,
     res = {}
     res['name'] = channel.name
     res['slowmode'] = channel.slowmode_delay
+    res['nsfw'] = channel.is_nsfw()
+    res['news'] = channel.is_news()
+    res['id'] = str(channel.id)
 
     perms = get_permission_overrides(channel)
     if export_role_overrides:
@@ -169,6 +174,7 @@ def conv_voice_channel_obj(channel: discord.VoiceChannel,
     res['name'] = channel.name
     res['bitrate'] = channel.bitrate
     res['user_limit'] = channel.user_limit
+    res['id'] = str(channel.id)
 
     perms = get_permission_overrides(channel)
     if export_role_overrides:
@@ -239,11 +245,28 @@ Arguments:
     guild -- a discord.py guild object
 """
 def dump_categories(guild: discord.Guild,
+                    uncategorized=True,
                   export_text_channels=True,
                   export_voice_channels=True,
                   export_role_overrides=True,
                   export_user_overrides=True) -> list:
     res = []
+
+    if len(guild.by_category()) <= 0:
+        return res
+
+    if uncategorized:
+        dummy_cat = {}
+        dummy_cat['name'] = ""
+        dummy_cat['text_channels'] = []
+        dummy_cat['voice_channels'] = []
+        for channel in guild.by_category()[0]:
+            if type(channel) == discord.TextChannel:
+                dummy_cat.append(conv_text_channel_obj(channel, export_role_overrides, export_user_overrides))
+            elif type(channel) == discord.VoiceChannel:
+                dummy_cat.append(conv_voice_channel_obj(channel, export_role_overrides, export_user_overrides))
+        res.append(dummy_cat)
+
     for category in guild.categories:
         res.append(conv_category_obj(category, export_text_channels, export_voice_channels, export_role_overrides, export_user_overrides))
     return res
@@ -255,5 +278,23 @@ The schema for server is in the schemas folder, as with all other relevant struc
 Arguments:
     guild -- a discord.py guild object
 """
-async def dump_server(guild: discord.Guild) -> dict:
-    pass
+def dump_server(guild: discord.Guild) -> dict:
+    res = {}
+
+    res['name'] = guild.name
+    res['icon_url'] = str(guild.icon_url)
+    res['voice_region'] = guild.region.value
+    if guild.afk_channel:
+        res['inactive_channel'] = str(guild.afk_channel.id)
+        res['inactive_timeout'] = guild.afk_timeout
+    res['system_message_channel'] = str(guild.system_channel.id)
+    res['join_broadcast'] = guild.system_channel_flags.join_notifications
+    res['boost_broadcast'] = guild.system_channel_flags.premium_subscriptions
+    res['default_notifications'] = bool(guild.default_notifications.value)
+    res['verification_level'] = guild.verification_level.value
+    res['content_filter'] = guild.explicit_content_filter.value
+    res['emojis'] = dump_emojis(guild)
+    res['roles'] = dump_roles(guild)
+    res['categories'] = dump_categories(guild)
+
+    return res
