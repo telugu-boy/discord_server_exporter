@@ -18,7 +18,7 @@
 
 import logging
 
-from . import role_schema_test, emoji_schema_test, text_channel_schema_test
+from . import role_schema_test, emoji_schema_test, text_channel_schema_test, voice_channel_schema_test, category_schema_test
 from discord.ext import commands
 
 import json
@@ -40,6 +40,8 @@ async def on_ready():
     role_schema_test.test_role_schema_validation(gld)
     emoji_schema_test.test_emoji_schema_validation(gld)
     text_channel_schema_test.test_text_channel_schema_validation(gld)
+    voice_channel_schema_test.test_voice_channel_schema_validation(gld)
+    category_schema_test.test_category_schema_validation(gld)
 
 
 if __name__ == "__main__":

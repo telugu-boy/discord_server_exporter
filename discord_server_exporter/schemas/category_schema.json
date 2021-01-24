@@ -1,23 +1,21 @@
 {
-  "title": "Discord voice channel",
-  "description": "Represents a single voice channel",
+  "title": "Discord category",
+  "description": "Represents a single category and it's child channels",
   "type": "object",
   "properties": {
     "name": {
-      "description": "The name of the channel",
+      "description": "The name of the cateogory",
       "type": "string"
     },
-    "bitrate": {
-      "description": "The voice channel bitrate",
-      "maximum": 256000,
-      "minimum": 8,
-      "type": "integer"
+    "text_channels": {
+      "description": "The text channels that belong to this category",
+      "type": "array",
+      "items": { "$ref": "text_channel_schema.json#/properties" }
     },
-    "user_limit": {
-      "description": "The user limit for this channel",
-      "maximum": 99,
-      "minimum": 0,
-      "type": "integer"
+    "voice_channels": {
+      "description": "The voice channels that belong to this category",
+      "type": "array",
+      "items": { "$ref": "voice_channel_schema.json#/properties" }
     },
     "role_permission_overrides": {
       "description": "An array of role permission overrides",
@@ -30,5 +28,5 @@
       "type": "array"
     }
   },
-  "required": [ "name", "bitrate", "user_limit" ]
+  "required": [ "name" ]
 }

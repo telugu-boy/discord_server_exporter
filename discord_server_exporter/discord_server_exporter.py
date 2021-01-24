@@ -101,7 +101,8 @@ def get_permission_overrides(channel: discord.abc.ChannelType) -> dict:
         permission_override_list = {}
         # False is explicitly disabled
         # True is explicitly enabled
-        # if a permission does NOT have an override, it is omitted from the dump
+        # if a permission does NOT have an override, it is omitted from the
+        # dump
         # Look at permission_setting_schemas.json for the schema itself.
         for perm_name in valid_perm_set:
             # If it doesn't exist, we don't want to add it as well
@@ -110,9 +111,9 @@ def get_permission_overrides(channel: discord.abc.ChannelType) -> dict:
                 permission_override_list[perm_name] = perm_status
 
         if type(entity) == discord.Role:
-            res['roles'].append( {"role_position": entity.position, "permissions": permission_override_list} )
+            res['roles'].append({"role_position": entity.position, "permissions": permission_override_list})
         elif type(entity) == discord.User:
-            res['users'].append( {"user_id": entity.id, "permissions": permission_override_list} )
+            res['users'].append({"user_id": entity.id, "permissions": permission_override_list})
 
     return res
 
@@ -139,7 +140,7 @@ def conv_text_channel_obj(channel: discord.TextChannel,
     return res
 
 """
-Return a list of roles of channels in the guild.
+Return a list of text channels in the guild.
 The schema for channel is in the schemas folder, as with all other relevant structures
 
 Arguments:
@@ -153,6 +154,98 @@ def dump_text_channels(guild: discord.Guild,
         res.append(conv_text_channel_obj(channel,
                                     export_role_overrides,
                                     export_user_overrides))
+    return res
+
+"""
+Maps a voice channel to a dictionary that conforms to the text channel schema.
+
+Arguments:
+    channel -- a discord.py voicechannel object
+"""
+def conv_voice_channel_obj(channel: discord.VoiceChannel,
+                          export_role_overrides=True,
+                          export_user_overrides=True):
+    res = {}
+    res['name'] = channel.name
+    res['bitrate'] = channel.bitrate
+    res['user_limit'] = channel.user_limit
+
+    perms = get_permission_overrides(channel)
+    if export_role_overrides:
+        res['role_permission_overrides'] = perms['roles']
+    if export_user_overrides:
+        res['user_permission_overrides'] = perms['users']
+
+    return res
+
+"""
+Return a list of voice channels in the guild.
+The schema for channel is in the schemas folder, as with all other relevant structures
+
+Arguments:
+    guild -- a discord.py guild object
+"""
+def dump_voice_channels(guild: discord.Guild,
+                  export_role_overrides=True,
+                  export_user_overrides=True) -> list:
+    res = []
+    for channel in guild.voice_channels:
+        res.append(conv_voice_channel_obj(channel,
+                                    export_role_overrides,
+                                    export_user_overrides))
+    return res
+
+"""
+Maps a category to a dictionary that conforms to the category schema.
+
+Arguments:
+    channel -- a discord.py voicechannel object
+"""
+def conv_category_obj(category: discord.CategoryChannel,
+                      export_text_channels=True,
+                  export_voice_channels=True,
+                          export_role_overrides=True,
+                          export_user_overrides=True):
+    res = {}
+    res['name'] = category.name
+    
+    if export_text_channels:
+        res['text_channels'] = []
+        for channel in category.text_channels:
+            res['text_channels'].append(conv_text_channel_obj(channel,
+                                    export_role_overrides,
+                                    export_user_overrides))
+
+    if export_voice_channels:
+        res['voice_channels'] = []
+        for channel in category.voice_channels:
+            res['voice_channels'].append(conv_voice_channel_obj(channel,
+                                    export_role_overrides,
+                                    export_user_overrides))
+
+    perms = get_permission_overrides(category)
+    if export_role_overrides:
+        res['role_permission_overrides'] = perms['roles']
+    if export_user_overrides:
+        res['user_permission_overrides'] = perms['users']
+
+    return res
+
+"""
+Return a list of categories in the guild.
+The schema for category is in the schemas folder, as with all other relevant structures
+
+Arguments:
+    guild -- a discord.py guild object
+"""
+def dump_categories(guild: discord.Guild,
+                  export_text_channels=True,
+                  export_voice_channels=True,
+                  export_role_overrides=True,
+                  export_user_overrides=True) -> list:
+    res = []
+    for category in guild.categories:
+        res.append(conv_category_obj(category, export_text_channels, export_voice_channels, export_role_overrides, export_user_overrides))
     return res
 
 """
