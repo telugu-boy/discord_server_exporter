@@ -1,2 +1,2 @@
 # discord_server_exporter
- Import and Export Discord servers with JSON
+ Import and Export Discord servers as JSON
