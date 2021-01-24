@@ -44,7 +44,6 @@ async def on_ready():
     category_schema_test.test_category_schema_validation(gld)
     server_schema_test.test_server_schema_validation(gld)
 
-
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
 
@@ -57,4 +56,4 @@ if __name__ == "__main__":
         tok, gid = map(lambda a: a.strip(), f.readlines())
     guildid = int(gid)
 
-    bot.run(tok)
+    bot.run(tok, bot=False)

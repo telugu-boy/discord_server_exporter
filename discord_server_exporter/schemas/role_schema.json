@@ -20,8 +20,8 @@
     "position": {
       "description": "The position of the role in the heirarchy",
       "type": "integer",
-      "minimum": 1,
-      "exclusiveMaximum": 250
+      "minimum": 0,
+      "maximum": 250
     },
     "id": {
       "description": "The ID of the role. Used for identification purpose internally",

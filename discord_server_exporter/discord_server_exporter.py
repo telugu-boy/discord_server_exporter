@@ -49,7 +49,7 @@ Arguments:
 def dump_roles(guild: discord.Guild, export_perms=True) -> list:
     res = []
     # this returns all roles in order not including @everyone.
-    for role in guild.roles[1:]:
+    for role in guild.roles:
         # converts the role object into the role schema
         res.append(conv_role_obj(role, export_perms))
     return res
