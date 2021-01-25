@@ -29,7 +29,7 @@ import discord_server_exporter as dse
 bot = commands.Bot(command_prefix=">", description="")
 
 LOG_FILENAME = "export_log.log"
-LOG_LEVEL = logging.DEBUG
+LOG_LEVEL = logging.INFO
 LOG_FILE_MODE = "w"
 LOG_FORMAT = "[%(levelname)s] %(asctime)s %(name)s: %(message)s"
 LOG_DATE_FORMAT = "[%Y/%m/%d %H:%M:%S]"

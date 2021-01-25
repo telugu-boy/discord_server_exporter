@@ -113,9 +113,6 @@ Arguments:
 
 
 def get_permission_overrides(channel: discord.abc.ChannelType) -> dict:
-    logging.info(
-        f"Dumping permission overrides for '{channel.name}' in '{channel.guild.name}'"
-    )
     # roles: list of tuples (role position, permission override list)
     # users: list of tuples (user ID, permission override list)
     res = {"roles": [], "users": []}
