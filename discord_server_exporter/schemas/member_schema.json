@@ -1,0 +1,32 @@
+{
+  "title": "Discord member",
+  "description": "Represents a single member and their roles",
+  "type": "object",
+  "properties": {
+    "username": {
+      "description": "The member's username",
+      "type": "string",
+      "minLength": 2,
+      "maxLength": 32
+    },
+    "discrim": {
+      "description": "The member's discriminator",
+      "type": "string"
+    },
+    "nickname": {
+      "description": "The member's nickname",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 32
+    },
+    "id": {
+      "description": "The ID of the member. Used for identification purpose internally",
+      "type": "string"
+    },
+    "role": {
+      "description": "An array of roles that the member holds",
+      "type": "array",
+      "items": { "$ref": "role_schema.json#/properties" }
+    }
+  }
+}

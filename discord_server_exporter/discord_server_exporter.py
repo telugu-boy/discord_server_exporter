@@ -380,16 +380,19 @@ def dump_categories(
 Return a dict object representing a single server.
 The schema for server is in the schemas folder, as with all other relevant structures
 
+WARNING: Exporting members may increase the size of the export considerably.
+
 Arguments:
     guild -- a discord.py guild object
 """
 
 
-def dump_server(guild: discord.Guild, export_members=True) -> dict:
+def dump_server(guild: discord.Guild, export_members=False) -> dict:
     logging.info(f"Dumping server '{guild.name}'")
     res = {}
 
     res["name"] = guild.name
+    res["id"] = guild.id
     res["icon_url"] = str(guild.icon_url)
     res["voice_region"] = guild.region.value
 

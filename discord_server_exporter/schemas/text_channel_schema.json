@@ -22,7 +22,7 @@
       "type": "boolean"
     },
     "id": {
-      "description": "The ID of the channel. Used for identification purpose internally",
+      "description": "The ID of the text channel. Used for identification purpose internally",
       "type": "string"
     },
     "role_permission_overrides": {

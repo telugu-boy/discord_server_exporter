@@ -20,7 +20,7 @@
       "type": "integer"
     },
     "id": {
-      "description": "The ID of the channel. Used for identification purpose internally",
+      "description": "The ID of the voice channel. Used for identification purpose internally",
       "type": "string"
     },
     "role_permission_overrides": {

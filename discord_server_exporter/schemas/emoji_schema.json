@@ -10,6 +10,10 @@
     "url": {
       "description": "The URL to the emoji",
       "type": "string"
+    },
+    "id": {
+      "description": "The ID of the emoji. Used for identification purpose internally",
+      "type": "string"
     }
   }
 }
