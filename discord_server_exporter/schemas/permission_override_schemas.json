@@ -1,6 +1,6 @@
 {
   "permission_override_list_schema": {
-    "title": "Discord permission list (OFF 0, NONE 1, ON 2)",
+    "title": "Discord permission list (OFF 0, ON 1)",
     "description": "A single channel override permission setting for either a role or user",
     "type": "object",
     "properties": {
