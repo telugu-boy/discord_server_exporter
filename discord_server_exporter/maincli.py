@@ -29,7 +29,7 @@ import discord_server_exporter as dse
 bot = commands.Bot(command_prefix=">", description="")
 
 LOG_FILENAME = "export_log.log"
-LOG_LEVEL = logging.INFO
+LOG_LEVEL = logging.DEBUG
 LOG_FILE_MODE = "w"
 LOG_FORMAT = "[%(levelname)s] %(asctime)s %(name)s: %(message)s"
 LOG_DATE_FORMAT = "[%Y/%m/%d %H:%M:%S]"
@@ -56,12 +56,9 @@ async def on_ready():
 
     logging.info("All OK")
 
+
 if __name__ == "__main__":
-    logging.basicConfig(
-        level = LOG_LEVEL,
-        format = LOG_FORMAT,
-        datefmt = LOG_DATE_FORMAT
-    )
+    logging.basicConfig(level=LOG_LEVEL, format=LOG_FORMAT, datefmt=LOG_DATE_FORMAT)
 
     with open("token.txt") as f:
         tok, gid = map(lambda a: a.strip(), f.readlines())

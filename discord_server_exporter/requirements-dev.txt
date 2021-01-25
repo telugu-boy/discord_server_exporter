@@ -1,2 +1,3 @@
 git+https://github.com/ambv/black@stable
 pylint>=2.5
+pre-commit

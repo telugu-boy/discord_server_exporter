@@ -385,13 +385,14 @@ Arguments:
 """
 
 
-def dump_server(guild: discord.Guild) -> dict:
+def dump_server(guild: discord.Guild, export_members=True) -> dict:
     logging.info(f"Dumping server '{guild.name}'")
     res = {}
 
     res["name"] = guild.name
     res["icon_url"] = str(guild.icon_url)
     res["voice_region"] = guild.region.value
+
     if guild.afk_channel:
         res["inactive_channel"] = str(guild.afk_channel.id)
         res["inactive_timeout"] = guild.afk_timeout
