@@ -1,7 +1,5 @@
 {
-  "title": "Discord emoji",
   "description": "Represents a single emoji",
-  "type": "object",
   "properties": {
     "name": {
       "description": "The name of the emoji",
@@ -15,5 +13,7 @@
       "description": "The ID of the emoji. Used for identification purpose internally",
       "type": "string"
     }
-  }
+  },
+  "title": "Discord emoji",
+  "type": "object"
 }

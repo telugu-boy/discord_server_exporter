@@ -1,22 +1,34 @@
 {
-  "title": "Discord server",
   "description": "Represents a single server",
-  "type": "object",
   "properties": {
-    "name": {
-      "description": "The name of the server",
-      "type": "string"
+    "boost_broadcast": {
+      "description": "Broastcast on server nitro boost",
+      "type": "boolean"
     },
-    "id": {
-      "description": "The ID of the server. Used for identification purpose internally",
-      "type": "string"
+    "categories": {
+      "description": "The categories of this server",
+      "items": { "$ref": "category_schema.json#/properties" },
+      "type": "array"
+    },
+    "content_filter": {
+      "description": "Content filter may be: disabled 0, no role 1 or all members 2",
+      "type": "integer"
+    },
+    "default_notifications": {
+      "description": "True for only @mentions, true for all messages",
+      "type": "boolean"
+    },
+    "emojis": {
+      "description": "The emojis of this server",
+      "items": { "$ref": "emoji_schema.json#/properties" },
+      "type": "array"
     },
     "icon_url": {
       "description": "The url of the icon of the server",
       "type": "string"
     },
-    "voice_region": {
-      "description": "The voice region of the server",
+    "id": {
+      "description": "The ID of the server. Used for identification purpose internally",
       "type": "string"
     },
     "inactive_channel": {
@@ -29,45 +41,33 @@
       "minimum": 300,
       "type": "integer"
     },
-    "system_message_channel": {
-      "description": "Where member join and nitro boost messages will go",
-      "type": "string"
-    },
     "join_broadcast": {
       "description": "Broadcast on member join",
       "type": "boolean"
     },
-    "boost_broadcast": {
-      "description": "Broastcast on server nitro boost",
-      "type": "boolean"
+    "name": {
+      "description": "The name of the server",
+      "type": "string"
     },
-    "default_notifications": {
-      "description": "True for only @mentions, true for all messages",
-      "type": "boolean"
+    "roles": {
+      "description": "The roles of this server",
+      "items": { "$ref": "role_schema.json#/properties" },
+      "type": "array"
+    },
+    "system_message_channel": {
+      "description": "Where member join and nitro boost messages will go",
+      "type": "string"
     },
     "verification_level": {
       "description": "Verification level may be: none 0, low 1, medium 2, high 3, extreme 4",
       "type": "integer"
     },
-    "content_filter": {
-      "description": "Content filter may be: disabled 0, no role 1 or all members 2",
-      "type": "integer"
-    },
-    "emojis": {
-      "description": "The emojis of this server",
-      "type": "array",
-      "items": { "$ref": "emoji_schema.json#/properties" }
-    },
-    "roles": {
-      "description": "The roles of this server",
-      "type": "array",
-      "items": { "$ref": "role_schema.json#/properties" }
-    },
-    "categories": {
-      "description": "The categories of this server",
-      "type": "array",
-      "items": { "$ref": "category_schema.json#/properties" }
+    "voice_region": {
+      "description": "The voice region of the server",
+      "type": "string"
     }
   },
-  "required": [ "name", "icon_url", "voice_region", "system_message_channel", "join_broadcast", "boost_broadcast", "default_notifications", "verification_level", "content_filter" ]
+  "required": [ "name", "icon_url", "voice_region", "system_message_channel", "join_broadcast", "boost_broadcast", "default_notifications", "verification_level", "content_filter" ],
+  "title": "Discord server",
+  "type": "object"
 }

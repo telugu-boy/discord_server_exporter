@@ -1,33 +1,33 @@
 {
-  "title": "Discord role",
   "description": "Represents a single role",
-  "type": "object",
   "properties": {
-    "name": {
-      "description": "The name of the role",
-      "type": "string"
-    },
     "color": {
       "description": "The colour of the role, represented as a 24 bit int",
-      "type": "integer",
+      "exclusiveMaximum": 16777216,
       "minimum": 0,
-      "exclusiveMaximum": 16777216
-    },
-    "mentionable": {
-      "description": "Whether or not the role is mentionable",
-      "type": "boolean"
-    },
-    "position": {
-      "description": "The position of the role in the heirarchy",
-      "type": "integer",
-      "minimum": 0,
-      "maximum": 250
+      "type": "integer"
     },
     "id": {
       "description": "The ID of the role. Used for identification purpose internally",
       "type": "string"
     },
-    "permission_value": { "$ref": "permission_value_schema.json#/properties" }
+    "mentionable": {
+      "description": "Whether or not the role is mentionable",
+      "type": "boolean"
+    },
+    "name": {
+      "description": "The name of the role",
+      "type": "string"
+    },
+    "permission_value": { "$ref": "permission_value_schema.json#/properties" },
+    "position": {
+      "description": "The position of the role in the heirarchy",
+      "maximum": 250,
+      "minimum": 0,
+      "type": "integer"
+    }
   },
-  "required": [ "name", "color", "mentionable", "position" ]
+  "required": [ "name", "color", "mentionable", "position" ],
+  "title": "Discord role",
+  "type": "object"
 }

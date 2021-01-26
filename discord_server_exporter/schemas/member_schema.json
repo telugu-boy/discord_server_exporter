@@ -1,13 +1,11 @@
 {
-  "title": "Discord member",
   "description": "Represents a single member and their roles",
-  "type": "object",
   "properties": {
     "username": {
       "description": "The member's username",
-      "type": "string",
+      "maxLength": 32,
       "minLength": 2,
-      "maxLength": 32
+      "type": "string"
     },
     "discrim": {
       "description": "The member's discriminator",
@@ -15,9 +13,9 @@
     },
     "nickname": {
       "description": "The member's nickname",
-      "type": "string",
+      "maxLength": 32,
       "minLength": 1,
-      "maxLength": 32
+      "type": "string"
     },
     "id": {
       "description": "The ID of the member. Used for identification purpose internally",
@@ -25,8 +23,10 @@
     },
     "role": {
       "description": "An array of roles that the member holds",
-      "type": "array",
-      "items": { "$ref": "role_schema.json#/properties" }
+      "items": { "$ref": "role_schema.json#/properties" },
+      "type": "array"
     }
-  }
+  },
+  "title": "Discord member",
+  "type": "object"
 }

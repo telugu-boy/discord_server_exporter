@@ -1,17 +1,24 @@
 {
-  "title": "Discord voice channel",
   "description": "Represents a single voice channel",
-  "type": "object",
   "properties": {
+    "bitrate": {
+      "description": "The voice channel bitrate",
+      "maximum": 256000,
+      "minimum": 8000,
+      "type": "integer"
+    },
+    "id": {
+      "description": "The ID of the voice channel. Used for identification purpose internally",
+      "type": "string"
+    },
     "name": {
       "description": "The name of the channel",
       "type": "string"
     },
-    "bitrate": {
-      "description": "The voice channel bitrate",
-      "maximum": 256000,
-      "minimum": 8,
-      "type": "integer"
+    "role_permission_overrides": {
+      "description": "An array of role permission overrides",
+      "items": { "$ref": "permission_override_schemas.json#/role_permission_override_schema/properties" },
+      "type": "array"
     },
     "user_limit": {
       "description": "The user limit for this channel",
@@ -19,20 +26,13 @@
       "minimum": 0,
       "type": "integer"
     },
-    "id": {
-      "description": "The ID of the voice channel. Used for identification purpose internally",
-      "type": "string"
-    },
-    "role_permission_overrides": {
-      "description": "An array of role permission overrides",
-      "type": "array",
-      "items": { "$ref": "permission_override_schemas.json#/role_permission_override_schema/properties" }
-    },
     "user_permission_overrides": {
       "description": "An array of role permission overrides",
       "items": { "$ref": "permission_override_schemas.json#/user_permission_override_schema/properties" },
       "type": "array"
     }
   },
-  "required": [ "name", "bitrate", "user_limit" ]
+  "required": [ "name", "bitrate", "user_limit" ],
+  "title": "Discord voice channel",
+  "type": "object"
 }
