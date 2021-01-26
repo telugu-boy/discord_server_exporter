@@ -45,6 +45,11 @@
       "description": "Broadcast on member join",
       "type": "boolean"
     },
+    "members": {
+      "description": "The members of this server",
+      "items": { "$ref": "member_schema.json#/properties" },
+      "type": "array"
+    },
     "name": {
       "description": "The name of the server",
       "type": "string"

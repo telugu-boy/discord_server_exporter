@@ -9,6 +9,8 @@
     },
     "discrim": {
       "description": "The member's discriminator",
+      "maxLength": 4,
+      "minLength": 4,
       "type": "string"
     },
     "nickname": {
@@ -21,12 +23,13 @@
       "description": "The ID of the member. Used for identification purpose internally",
       "type": "string"
     },
-    "role": {
+    "roles": {
       "description": "An array of roles that the member holds",
-      "items": { "$ref": "role_schema.json#/properties" },
+      "items": { "type": "string" },
       "type": "array"
     }
   },
+  "required":  ["username", "discrim", "id"],
   "title": "Discord member",
   "type": "object"
 }

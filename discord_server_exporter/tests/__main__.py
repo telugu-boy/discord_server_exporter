@@ -30,7 +30,10 @@ from . import (
     server_schema_test,
 )
 
-bot = commands.Bot(command_prefix=">", description="")
+import discord
+
+intents = discord.Intents.all()
+bot = commands.Bot(command_prefix=">", intents=intents)
 
 guildid = None
 

@@ -22,11 +22,12 @@ import json
 import logging
 
 # This is the CLI for Discord Server Exporter.
-from discord.ext import commands
+import discord
 
 import discord_server_exporter as dse
 
-bot = commands.Bot(command_prefix=">", description="")
+intents = discord.Intents.all()
+bot = discord.Client(intents=intents)
 
 LOG_FILENAME = "export_log.log"
 LOG_LEVEL = logging.INFO
@@ -43,9 +44,15 @@ async def on_ready():
     if not os.path.exists("my_servers"):
         os.mkdir("my_servers")
 
+    biswas = dse.dump_server(bot.get_guild(773538375533461536), True)
+    srv_name_clean = re.sub(r"\W+", "", biswas["name"])
+    with open(f"my_servers/{srv_name_clean}.json", "w") as f:
+        f.write(json.dumps(biswas))
+
+    """
     servers = []
     for gld in bot.guilds:
-        biswas = dse.dump_server(gld)
+        biswas = dse.dump_server(gld, True)
         servers.append(biswas)
         srv_name_clean = re.sub(r"\W+", "", biswas["name"])
         with open(f"my_servers/{srv_name_clean}.json", "w") as f:
@@ -53,6 +60,7 @@ async def on_ready():
 
     with open(f"my_servers/{bot.user.id}.json", "w") as f:
         f.write(json.dumps(servers))
+    """
 
     logging.info("All OK")
 

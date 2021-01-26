@@ -374,6 +374,51 @@ def dump_categories(
 
 
 """
+Maps a member to a dictionary that conforms to the member schema.
+
+Arguments:
+    guild -- a discord.py member object
+"""
+
+
+def conv_member_obj(
+    member: discord.Member, export_nickname=True, export_roles=True
+) -> dict:
+    logging.info(
+        f"Dumping member '{member.name}#{member.discriminator}' ({member.id}) in server '{member.guild.name}'"
+    )
+    res = {}
+
+    res["name"] = member.name
+    res["discrim"] = member.discriminator
+    res["id"] = str(member.id)
+
+    if export_nickname:
+        res["nickname"] = member.nick
+    if export_roles:
+        res["roles"] = [str(role.id) for role in member.roles]
+
+    return res
+
+
+"""
+Return a list of members in the guild.
+The schema for member is in the schemas folder, as with all other relevant structures
+
+Arguments:
+    guild -- a discord.py member object
+"""
+
+
+def dump_members(guild: discord.Guild, export_nickname=True, export_roles=True) -> list:
+    logging.info(f"Dumping members for server '{guild.name}'")
+    res = []
+    for member in guild.members:
+        res.append(conv_member_obj(member, export_nickname, export_roles))
+    return res
+
+
+"""
 Return a dict object representing a single server.
 The schema for server is in the schemas folder, as with all other relevant structures
 
@@ -389,7 +434,7 @@ def dump_server(guild: discord.Guild, export_members=False) -> dict:
     res = {}
 
     res["name"] = guild.name
-    res["id"] = guild.id
+    res["id"] = str(guild.id)
     res["icon_url"] = str(guild.icon_url)
     res["voice_region"] = guild.region.value
 
@@ -412,5 +457,8 @@ def dump_server(guild: discord.Guild, export_members=False) -> dict:
     res["emojis"] = dump_emojis(guild)
     res["roles"] = dump_roles(guild)
     res["categories"] = dump_categories(guild)
+
+    if export_members:
+        res["members"] = dump_members(guild)
 
     return res
