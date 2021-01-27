@@ -393,7 +393,7 @@ def conv_member_obj(
     res["discrim"] = member.discriminator
     res["id"] = str(member.id)
 
-    if export_nickname:
+    if export_nickname and member.nick is not None:
         res["nickname"] = member.nick
     if export_roles:
         res["roles"] = [str(role.id) for role in member.roles]

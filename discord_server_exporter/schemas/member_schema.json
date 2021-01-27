@@ -1,7 +1,7 @@
 {
   "description": "Represents a single member and their roles",
   "properties": {
-    "username": {
+    "name": {
       "description": "The member's username",
       "maxLength": 32,
       "minLength": 2,

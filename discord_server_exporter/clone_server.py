@@ -21,15 +21,16 @@ import re
 import json
 import logging
 
-# This is the CLI for Discord Server Exporter.
 import discord
+from discord.ext import commands
 
 import discord_server_exporter as dse
+import discord_server_importer as dsi
 
 intents = discord.Intents.all()
 bot = discord.Client(intents=intents)
 
-LOG_FILENAME = "export_log.log"
+LOG_FILENAME = "import_log.log"
 LOG_LEVEL = logging.INFO
 LOG_FILE_MODE = "w"
 LOG_FORMAT = "[%(levelname)s] %(asctime)s %(name)s: %(message)s"
@@ -40,27 +41,6 @@ guildid = None
 @bot.event
 async def on_ready():
     logging.info("Bot started")
-
-    if not os.path.exists("my_servers"):
-        os.mkdir("my_servers")
-
-    biswas = dse.dump_server(bot.get_guild(773538375533461536), True)
-    srv_name_clean = re.sub(r"\W+", "", biswas["name"])
-    with open(f"my_servers/{srv_name_clean}.json", "w") as f:
-        f.write(json.dumps(biswas))
-
-    """
-    servers = []
-    for gld in bot.guilds:
-        biswas = dse.dump_server(gld, True)
-        servers.append(biswas)
-        srv_name_clean = re.sub(r"\W+", "", biswas["name"])
-        with open(f"my_servers/{srv_name_clean}.json", "w") as f:
-            f.write(json.dumps(biswas))
-
-    with open(f"my_servers/{bot.user.id}.json", "w") as f:
-        f.write(json.dumps(servers))
-    """
 
     logging.info("All OK")
 

@@ -28,12 +28,13 @@ from . import (
     voice_channel_schema_test,
     category_schema_test,
     server_schema_test,
+    member_schema_test,
 )
 
 import discord
 
 intents = discord.Intents.all()
-bot = commands.Bot(command_prefix=">", intents=intents)
+bot = discord.Client(intents=intents)
 
 guildid = None
 
@@ -48,6 +49,9 @@ async def on_ready():
     voice_channel_schema_test.test_voice_channel_schema_validation(gld)
     category_schema_test.test_category_schema_validation(gld)
     server_schema_test.test_server_schema_validation(gld)
+    member_schema_test.test_member_schema_validation(gld)
+
+    logging.info("All OK")
 
 
 if __name__ == "__main__":

@@ -25,7 +25,7 @@ import discord
 import discord_server_exporter as dse
 
 
-def test_role_schema_validation(gld: discord.Guild):
+def test_member_schema_validation(gld: discord.Guild):
     logging.info("Running member schema validation test")
 
     member_schema_path = "schemas/member_schema.json"
