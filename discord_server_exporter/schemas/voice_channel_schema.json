@@ -3,7 +3,7 @@
   "properties": {
     "bitrate": {
       "description": "The voice channel bitrate",
-      "maximum": 256000,
+      "maximum": 384000,
       "minimum": 8000,
       "type": "integer"
     },

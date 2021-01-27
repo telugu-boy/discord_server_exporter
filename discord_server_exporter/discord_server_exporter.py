@@ -43,7 +43,7 @@ def conv_role_obj(role: discord.Role, export_perms=True) -> dict:
         logging.info(
             f"Dumping role permissions for role '{role.name}' in '{role.guild.name}'"
         )
-        res["permission_value"] = role.permissions.value
+        res["permission_value"] = str(role.permissions.value)
     return res
 
 

@@ -29,7 +29,7 @@
       "type": "array"
     }
   },
-  "required":  ["username", "discrim", "id"],
+  "required":  ["name", "discrim", "id"],
   "title": "Discord member",
   "type": "object"
 }

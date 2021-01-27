@@ -95,6 +95,26 @@ def get_icon_under_10mb(url: str):
                 return server_icon_req.read()
 
 
+async def write_roles(bot: discord.Client, existing_guild: discord.Guild, server: dict):
+    # We need `len(server["roles"])` of free spaces for roles.
+    # As discord has a role limit of 250, `250 - len(existing_guild.roles)`
+    # is the amount of free spaces left. Issue an input() to ask user
+    free_spaces_left = 250 - len(existing_guild.roles)
+    logging.info(
+        f"{free_spaces_left} role spaces available for server '{existing_guild.name}'."
+    )
+
+    if len(server["roles"]) < free_spaces_left:
+        inp = input(
+            f"""
+        There are too many roles to fit in server '{existing_guild.name}'.
+        Continuing to write roles will truncate the last roles that are not able to fit. (c)
+        Overwriting roles will destroy all roles starting from the highest role of the user/bot. (o)
+        Exiting will not touch the roles (e)
+        Choice: """
+        )
+
+
 """
 Creates a guild with a dictionary conforming to the server schema
 The schema for server is in the schemas folder, as with all other relevant structures
@@ -158,4 +178,10 @@ async def create_server(bot: discord.Client, server: dict):
         )
         return None
 
-    #
+    # After the server is created, we can add the roles and stuff with other functions
+    # which can be used in  `overwrite_server`
+    # first: roles
+
+    # second: categories, for synced perms
+
+    # third: channels, for perm overrides
