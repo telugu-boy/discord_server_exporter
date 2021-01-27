@@ -42,6 +42,10 @@ guildid = None
 async def on_ready():
     logging.info("Bot started")
 
+    gld = bot.get_guild(guildid)
+    biswas = dse.dump_server(gld)
+    await dsi.create_server(bot, biswas)
+
     logging.info("All OK")
 
 

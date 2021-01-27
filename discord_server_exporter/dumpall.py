@@ -66,7 +66,7 @@ async def on_ready():
     for gld in bot.guilds:
         biswas = dse.dump_server(
             gld
-        )  # Exporting members does not work due to intents                            "
+        )  # Exporting members does not work due to intents      "
         servers.append(biswas)
         srv_name_clean = re.sub(
             r"\W+", "", biswas["name"]
