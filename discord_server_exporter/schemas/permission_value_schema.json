@@ -1,9 +1,0 @@
-{
-  "description": "The 53-bit integer that represents permissions. exclusiveMaximum is 2**53",
-  "properties": {
-    "description": "The permission integer",
-    "type": "string"
-  },
-  "title": "Represents a permission integer",
-  "type": "object"
-}

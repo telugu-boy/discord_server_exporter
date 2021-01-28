@@ -105,7 +105,6 @@
         "type": "boolean"
       }
     },
-    "required": [],
     "title": "Discord permission list (OFF 0, ON 1)",
     "type": "object"
   },
@@ -114,11 +113,12 @@
     "description": "Represents role permission settings for a channel or category",
     "properties": {
       "permissions": { "$ref": "#/permission_override_list_schema/properties" },
-      "role_id": {
+      "id": {
         "description": "The role's ID",
         "type": "integer"
       }
     },
+    "required": ["permissions", "id"],
     "title": "Discord permission settings",
     "type": "object"
   },
@@ -127,11 +127,12 @@
     "description": "Represents user permission settings for a channel or category",
     "properties": {
       "permissions": { "$ref": "#/permission_override_list_schema/properties" },
-      "user_id": {
+      "id": {
         "description": "The user's ID",
         "type": "integer"
       }
     },
+    "required": [ "permissions", "id" ],
     "title": "Discord permission settings",
     "type": "object"
   }

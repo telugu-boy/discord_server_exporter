@@ -30,7 +30,7 @@ Gets a server icon under 10mb if the original is over
 Return: bytes-like object with the downloaded icon
 
 Arguments:
-    bot -- URL to the server icon
+    url -- URL to the server icon
 """
 
 
@@ -48,7 +48,7 @@ def get_icon_under_10mb(url: str):
 
     icon_sizes = (2048, 1024, 512, 256, 128)
 
-    # Sorted in ascending order of size. GIFs are added to the front
+    # Sorted in ascending order of size.  GIFs are added to the front
     # if the supplied URL points to a GIF.
     formats = ["webp", "jpg", "png"]
 
@@ -70,14 +70,16 @@ def get_icon_under_10mb(url: str):
     # where the extension lies.
     icon_ext = url.split(".")[-1].split("?")[0]
 
-    # GIFs are not processed for non animated icons, so accessing it would give an error
+    # GIFs are not processed for non animated icons, so accessing it would give
+    # an error
     if icon_ext == "gif":
         formats.insert(0, "gif")
 
     # The URL without an extension or size.
     icon_url_no_ext = ".".join(url.split(".")[:-1])
 
-    # We want the highest resolution images, so try 2048 on all formats and so on
+    # We want the highest resolution images, so try 2048 on all formats and
+    # then the next highest size 1024 and so on
     for icon_size in icon_sizes:
         for format in formats:
             logging.info(f"Trying {format} and {icon_size}")
@@ -95,24 +97,157 @@ def get_icon_under_10mb(url: str):
                 return server_icon_req.read()
 
 
-async def write_roles(bot: discord.Client, existing_guild: discord.Guild, server: dict):
-    # We need `len(server["roles"])` of free spaces for roles.
-    # As discord has a role limit of 250, `250 - len(existing_guild.roles)`
-    # is the amount of free spaces left. Issue an input() to ask user
-    free_spaces_left = 250 - len(existing_guild.roles)
+"""
+Converts a role dict to a discord.py create_role compatible kwargs dict.
+
+Arguments:
+    role_dict -- a dict representing a role as specified by role_schema.json
+"""
+
+
+def role_dict_to_dpy(role_dict: dict):
+    res = {}
+    res["name"] = role["name"]
+    res["color"] = int(role["color"])
+    res["mentionable"] = bool(role["mentionable"])
+    res["permissions"] = int(role["permission_value"])
+    res["position"] = int(role["position"])
+    res["hoisted"] = bool(role["hoisted"])
+    return res
+
+
+"""
+Append roles to the end of the heirarchy.
+This will truncate roles if they cannot fit.
+This will not touch the @everyone role.
+
+Arguments:
+    bot -- a discord.py client object.
+    existing_guild -- the target guild.
+    server -- a discord server dict following the server schema
+"""
+
+
+async def append_roles(
+    bot: discord.Client,
+    existing_guild: discord.Guild,
+    server: dict,
+    overwrite_prompt=True,
+):
+    # See comment of `write_roles`
+    free_spaces_left = 251 - len(existing_guild.roles)
     logging.info(
-        f"{free_spaces_left} role spaces available for server '{existing_guild.name}'."
+        f"{free_spaces_left} role spaces available for server '{existing_guild.name}'"
     )
 
-    if len(server["roles"]) < free_spaces_left:
+    if overwrite_prompt and len(server["roles"]) > free_spaces_left:
+        logging.warning(
+            "Not enough free role spaces left for server '{existing_guild.name}'"
+        )
         inp = input(
             f"""
         There are too many roles to fit in server '{existing_guild.name}'.
-        Continuing to write roles will truncate the last roles that are not able to fit. (c)
-        Overwriting roles will destroy all roles starting from the highest role of the user/bot. (o)
-        Exiting will not touch the roles (e)
-        Choice: """
+        The bottom {len(server["roles"]) - free_spaces_left - 1} roles will not be added.
+        Use `write_roles` to overwrite roles.
+        Y/n : """
+        ).lower()
+
+        if inp[0] == "y":
+            logging.info("Append roles for server '{existing_guild.name}'")
+        else:
+            logging.info("Abort append_roles for server '{existing_guild.name}'")
+
+    # We need to sort the roles so they are in the correct position
+    sorted_server_roles = sorted(
+        server["roles"], key=lambda role: int(role["position"])
+    )
+
+    for role in range(free_spaces_left):
+        logging.info(f"Appending role '{role.name}' for server '{existing_guild.name}'")
+        await existing_guild.create_role(
+            **role_dict_to_dpy(role), reason="Automatic role appending"
         )
+
+
+"""
+Overwrites roles starting from the role below the highest role of the client.
+This will overwrite ALL roles and DELETE remaining ones if the client is the owner of existing_guild.
+
+Arguments:
+    bot -- a discord.py client object.
+    existing_guild -- the target guild.
+    server -- a discord server dict following the server schema
+"""
+
+
+async def write_roles(
+    bot: discord.Client,
+    existing_guild: discord.Guild,
+    server: dict,
+    overwrite_prompt=True,
+):
+    # We need `len(server["roles"])` of free spaces for roles.
+    # As discord has a role limit of 250 + @everyone, `251 - len(existing_guild.roles)`
+    # is the amount of free spaces left.  Issue an input() to ask user
+    free_spaces_left = 251 - len(existing_guild.roles)
+    logging.info(
+        f"{free_spaces_left} role spaces available for server '{existing_guild.name}'"
+    )
+
+    if overwrite_prompt and len(server["roles"]) > free_spaces_left:
+        logging.warning(
+            "Not enough free role spaces left for server '{existing_guild.name}'"
+        )
+        inp = input(
+            f"""
+        There are too many roles to fit in server '{existing_guild.name}'.
+        Continuing to write roles will destroy all roles starting from the highest role of the user/bot.
+        Use `append_roles` to add roles to the end of the heirarchy.
+        Y/n : """
+        ).lower()
+
+        if inp[0] == "y":
+            logging.info(
+                "Overwrite roles under highest role of client for server '{existing_guild.name}'"
+            )
+        else:
+            logging.info("Abort write_roles for server '{existing_guild.name}'")
+            return None
+
+    # We need to sort the roles so they are in the correct position
+    sorted_server_roles = sorted(
+        server["roles"], key=lambda role: int(role["position"])
+    )
+
+    amt_to_write = min(len(existing_guild.roles), len(sorted_server_roles))
+    # Overwriting
+    for idx in range(amt_to_write):
+        logging.info(
+            f"Writing role '{sorted_server_roles[idx].name}' in place of role '{role.name}' for server '{existing_guild.name}'"
+        )
+
+        await role.edit(
+            **role_dict_to_dpy(sorted_server_roles[idx]),
+            reason="Automatic role writing",
+        )
+
+    # Appending
+    if len(sorted_server_roles) > len(existing_guild.roles):
+        # amount of roles left (to write)
+        amt_roles_left = len(sorted_server_roles) - len(existing_guild.roles)
+        for i in range(amt_to_write, amt_roles_left):
+            role = sorted_server_roles[i]
+            logging.info(
+                f"Appending role '{role.name}' for server '{existing_guild.name}'"
+            )
+            await existing_guild.create_role(
+                **role_dict_to_dpy(role), reason="Automatic role appending"
+            )
+    # Erasing
+    else:
+        amt_roles_to_erase = len(existing_guild.roles) - len(sorted_server_roles)
+        for i in range():
+            pass
 
 
 """
@@ -121,7 +256,7 @@ The schema for server is in the schemas folder, as with all other relevant struc
 
 Arguments:
     bot -- a discord.py client object. AutoShardedClient has not been tested.
-    server -- a discord.py guild object
+    server -- a discord server dict following the server schema
 
 Exceptions:
     Server unable to be created. Return value `None`
@@ -146,7 +281,8 @@ async def create_server(bot: discord.Client, server: dict):
 
     logging.info(f"OK: server name \"{server['name']}\"")
 
-    # Download the server icon. The icon argument for create_guild takes a bytes-like object
+    # Download the server icon.  The icon argument for create_guild takes a
+    # bytes-like object
     logging.info("Downloading server icon...")
 
     try:
@@ -156,10 +292,11 @@ async def create_server(bot: discord.Client, server: dict):
         logging.error("Could not download server icon, falling back to default")
         server_icon_bytes = None
 
-    # A bot account in over 10 guilds cannot create guilds and will throw an HTTPException
+    # A bot account in over 10 guilds cannot create guilds and will throw an
+    # HTTPException
     # We have no way of verifying if `bot` is a real bot or a user account
     try:
-        await bot.create_guild(
+        new_guild = await bot.create_guild(
             server["name"],
             region=discord.VoiceRegion(server["voice_region"]),
             icon=server_icon_bytes,
@@ -181,7 +318,7 @@ async def create_server(bot: discord.Client, server: dict):
     # After the server is created, we can add the roles and stuff with other functions
     # which can be used in  `overwrite_server`
     # first: roles
-
+    await write_roles(bot, new_guild, server)
     # second: categories, for synced perms
 
     # third: channels, for perm overrides

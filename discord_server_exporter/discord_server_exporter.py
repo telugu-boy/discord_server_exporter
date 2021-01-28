@@ -38,6 +38,7 @@ def conv_role_obj(role: discord.Role, export_perms=True) -> dict:
     res["mentionable"] = role.mentionable
     res["position"] = role.position
     res["id"] = str(role.id)
+    res["hoisted"] = role.hoist
     # this is the permission integer
     if export_perms:
         logging.info(
@@ -133,11 +134,11 @@ def get_permission_overrides(channel: discord.abc.ChannelType) -> dict:
 
         if isinstance(entity, discord.Role):
             res["roles"].append(
-                {"role_id": entity.id, "permissions": permission_override_list}
+                {"id": entity.id, "permissions": permission_override_list}
             )
         elif isinstance(entity, discord.User):
             res["users"].append(
-                {"user_id": entity.id, "permissions": permission_override_list}
+                {"id": entity.id, "permissions": permission_override_list}
             )
 
     return res
