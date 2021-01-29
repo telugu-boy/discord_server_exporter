@@ -105,7 +105,7 @@ Arguments:
 """
 
 
-def role_dict_to_dpy(role_dict: dict):
+def role_dict_to_dpy(role: dict):
     res = {}
     res["name"] = role["name"]
     res["color"] = int(role["color"])
@@ -196,7 +196,7 @@ async def write_roles(
 
     if overwrite_prompt and len(server["roles"]) > free_spaces_left:
         logging.warning(
-            "Not enough free role spaces left for server '{existing_guild.name}'"
+            f"Not enough free role spaces left for server '{existing_guild.name}'"
         )
         inp = input(
             f"""
@@ -208,10 +208,10 @@ async def write_roles(
 
         if inp[0] == "y":
             logging.info(
-                "Overwrite roles under highest role of client for server '{existing_guild.name}'"
+                f"Overwrite roles under highest role of client for server '{existing_guild.name}'"
             )
         else:
-            logging.info("Abort write_roles for server '{existing_guild.name}'")
+            logging.info(f"Abort write_roles for server '{existing_guild.name}'")
             return None
 
     # We need to sort the roles so they are in the correct position
@@ -220,10 +220,18 @@ async def write_roles(
     )
 
     amt_to_write = min(len(existing_guild.roles), len(sorted_server_roles))
+    everyonedict = role_dict_to_dpy(sorted_server_roles[0])
+    # del everyonedict['position']
+    # Overwrite the @everyone role
+    await existing_guild.default_role.edit(
+        **everyonedict, reason="Automatic role writing"
+    )
+
     # Overwriting
-    for idx in range(amt_to_write):
+    for idx in range(1, amt_to_write):
+        role = existing_guild.roles[idx]
         logging.info(
-            f"Writing role '{sorted_server_roles[idx].name}' in place of role '{role.name}' for server '{existing_guild.name}'"
+            f"Writing role '{sorted_server_roles[idx]['name']}' in place of role '{role.name}' for server '{existing_guild.name}'"
         )
 
         await role.edit(
@@ -246,8 +254,11 @@ async def write_roles(
     # Erasing
     else:
         amt_roles_to_erase = len(existing_guild.roles) - len(sorted_server_roles)
-        for i in range():
-            pass
+        for i in range(amt_roles_to_erase):
+            logging.info(
+                f"Deleting role '{existing_guild.roles[-1].name}' for server '{existing_guild.name}'"
+            )
+            await existing_guild.roles[-1].delete()
 
 
 """
