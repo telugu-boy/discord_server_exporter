@@ -101,19 +101,43 @@ def get_icon_under_10mb(url: str):
 Converts a role dict to a discord.py create_role compatible kwargs dict.
 
 Arguments:
-    role_dict -- a dict representing a role as specified by role_schema.json
+    role -- a dict representing a role as specified by role_schema.json
 """
 
 
 def role_dict_to_dpy(role: dict):
     res = {}
     res["name"] = role["name"]
-    res["color"] = int(role["color"])
+    res["color"] = role["color"]
     res["mentionable"] = bool(role["mentionable"])
-    res["permissions"] = int(role["permission_value"])
+    res["permissions"] = discord.Permissions(int(role["permission_value"]))
     res["position"] = int(role["position"])
-    res["hoisted"] = bool(role["hoisted"])
+    res["hoist"] = bool(role["hoist"])
     return res
+
+
+"""
+Checks if a role's attributes (listed in the schema, excluding id) are equal, specifically:
+    color
+    hoist
+    mentionable
+    name
+    permission_value
+
+Arguments:
+    role_dpy -- a discord.py role object
+    role_dict -- a dict representing a role as specified by role_schema.json
+"""
+
+
+def check_roles_equal(role_dpy: discord.Role, role_dict: dict):
+    return (
+        role_dpy.color.value == role_dict["color"]
+        and role_dpy.hoist == role_dict["hoist"]
+        and role_dpy.mentionable == role_dict["mentionable"]
+        and role_dpy.name == role_dict["name"]
+        and role_dpy.permissions.value == int(role_dict["permission_value"])
+    )
 
 
 """
@@ -158,15 +182,18 @@ async def append_roles(
             logging.info("Abort append_roles for server '{existing_guild.name}'")
 
     # We need to sort the roles so they are in the correct position
-    sorted_server_roles = sorted(
-        server["roles"], key=lambda role: int(role["position"])
+    sorted_server_roles = list(
+        reversed(sorted(server["roles"], key=lambda role: int(role["position"])))
     )
 
-    for role in range(free_spaces_left):
-        logging.info(f"Appending role '{role.name}' for server '{existing_guild.name}'")
-        await existing_guild.create_role(
-            **role_dict_to_dpy(role), reason="Automatic role appending"
+    for idx in range(free_spaces_left):
+        role = sorted_server_roles[idx]
+        logging.info(
+            f"Appending role '{role['name']}' for server '{existing_guild.name}'"
         )
+        dpy_role = role_dict_to_dpy(role)
+        del dpy_role["position"]
+        await existing_guild.create_role(**dpy_role, reason="Automatic role appending")
 
 
 """
@@ -194,13 +221,9 @@ async def write_roles(
         f"{free_spaces_left} role spaces available for server '{existing_guild.name}'"
     )
 
-    if overwrite_prompt and len(server["roles"]) > free_spaces_left:
-        logging.warning(
-            f"Not enough free role spaces left for server '{existing_guild.name}'"
-        )
+    if overwrite_prompt:
         inp = input(
             f"""
-        There are too many roles to fit in server '{existing_guild.name}'.
         Continuing to write roles will destroy all roles starting from the highest role of the user/bot.
         Use `append_roles` to add roles to the end of the heirarchy.
         Y/n : """
@@ -215,41 +238,53 @@ async def write_roles(
             return None
 
     # We need to sort the roles so they are in the correct position
-    sorted_server_roles = sorted(
-        server["roles"], key=lambda role: int(role["position"])
+    sorted_server_roles = list(
+        reversed(sorted(server["roles"], key=lambda role: int(role["position"])))
     )
 
     amt_to_write = min(len(existing_guild.roles), len(sorted_server_roles))
     everyonedict = role_dict_to_dpy(sorted_server_roles[0])
     # del everyonedict['position']
     # Overwrite the @everyone role
+    logging.info(f"Overwrite default role for server '{existing_guild.name}'")
     await existing_guild.default_role.edit(
-        **everyonedict, reason="Automatic role writing"
+        permissions=everyonedict["permissions"], reason="Automatic role writing"
     )
 
+    roles_top_to_bottom = list(reversed(existing_guild.roles))
+
     # Overwriting
-    for idx in range(1, amt_to_write):
-        role = existing_guild.roles[idx]
+    for idx in range(amt_to_write):
+        role = roles_top_to_bottom[idx]
+        replacement_role_dict = sorted_server_roles[idx]
+
+        if check_roles_equal(role, replacement_role_dict):
+            logging.info(
+                f"Skipping role overwrite of '{replacement_role_dict['name']}' for server '{existing_guild.name}' - role is equal"
+            )
+            continue
+
         logging.info(
-            f"Writing role '{sorted_server_roles[idx]['name']}' in place of role '{role.name}' for server '{existing_guild.name}'"
+            f"Writing role '{replacement_role_dict['name']}' in place of role '{role.name}' for server '{existing_guild.name}'"
         )
 
-        await role.edit(
-            **role_dict_to_dpy(sorted_server_roles[idx]),
-            reason="Automatic role writing",
-        )
+        dpy_role_dict = role_dict_to_dpy(replacement_role_dict)
+        del dpy_role_dict["position"]
+        await role.edit(**dpy_role_dict, reason="Automatic role writing")
 
     # Appending
     if len(sorted_server_roles) > len(existing_guild.roles):
         # amount of roles left (to write)
         amt_roles_left = len(sorted_server_roles) - len(existing_guild.roles)
-        for i in range(amt_to_write, amt_roles_left):
+        for i in range(amt_to_write, amt_to_write + amt_roles_left):
             role = sorted_server_roles[i]
             logging.info(
-                f"Appending role '{role.name}' for server '{existing_guild.name}'"
+                f"Appending role '{role['name']}' for server '{existing_guild.name}'"
             )
+            dpy_role_dict = role_dict_to_dpy(role)
+            del dpy_role_dict["position"]
             await existing_guild.create_role(
-                **role_dict_to_dpy(role), reason="Automatic role appending"
+                **dpy_role_dict, reason="Automatic role appending"
             )
     # Erasing
     else:
@@ -258,7 +293,7 @@ async def write_roles(
             logging.info(
                 f"Deleting role '{existing_guild.roles[-1].name}' for server '{existing_guild.name}'"
             )
-            await existing_guild.roles[-1].delete()
+            await existing_guild.roles[0].delete()
 
 
 """

@@ -7,8 +7,8 @@
       "minimum": 0,
       "type": "integer"
     },
-    "hoisted": {
-      "description": "Whether or not the role is hoisted",
+    "hoist": {
+      "description": "Whether or not the role is hoist",
       "type": "boolean"
     },
     "id": {

@@ -43,7 +43,7 @@ async def on_ready():
     logging.info("Bot started")
 
     gld = bot.get_guild(guildid)
-    target = bot.get_guild(804227098590969866)
+    target = bot.get_guild(804956690687459358)
     biswas = dse.dump_server(gld)
     await dsi.write_roles(bot, target, biswas)
     # await dsi.create_server(bot, biswas)
