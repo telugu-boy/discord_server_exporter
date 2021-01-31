@@ -112,9 +112,10 @@ Arguments:
 """
 
 
-def append_emojis(
+async def append_emojis(
     bot: discord.Client, existing_guild: discord.Guild, emojis: list, append_prompt=True
 ):
+    logging.info(f"Appending emojis for server '{existing_guild.name}'")
     amt_existing_emojis = len(existing_guild.emojis)
     amt_emoji_slots = boost_emoji_count[existing_guild.premium_tier]
     # premium tier is an int
@@ -145,7 +146,11 @@ def append_emojis(
         req = Request(emoji["url"], None, req_hdr)
         emoji_req = urlopen(req)
 
-        file_size = int(server_icon_req.info()["Content-Length"])
+        file_size = int(emoji_req.info()["Content-Length"])
+        # 256kb limit
+        if file_size > 256000:
+            logging.info(f"Emoji '{emoji['name']}' is {file_size}b > 256kb and will be skipped.")
+
         logging.info(
             f"Appending emoji '{emoji['name']}' for server '{existing_guild.name}'"
         )
@@ -153,7 +158,7 @@ def append_emojis(
         emoji_download = emoji_req.read()
         logging.info(f"Downloaded emoji '{emoji['name']}' ({file_size}b)")
 
-        # await existing_guild.create_custom_emoji(name=emoji['name'], image=emoji_download, reason="Automatic emoji appending")
+        await existing_guild.create_custom_emoji(name=emoji['name'], image=emoji_download, reason="Automatic emoji appending")
 
 
 """
@@ -214,6 +219,7 @@ Arguments:
 async def append_roles(
     bot: discord.Client, existing_guild: discord.Guild, roles: list, append_prompt=True
 ):
+    logging.info(f"Appending roles for server '{existing_guild.name}'")
     # See comment of `write_roles`
     free_spaces_left = 250 - len(existing_guild.roles)
     logging.info(
@@ -269,6 +275,7 @@ async def write_roles(
     server: dict,
     overwrite_prompt=True,
 ):
+    logging.info(f"Writing roles for server '{existing_guild.name}'")
 
     """
     Algorithm:
@@ -516,10 +523,12 @@ async def create_server(bot: discord.Client, server: dict):
     # functions
     # which can be used in `overwrite_server`
     # first: roles
-    await append_roles(bot, new_guild, server)
+    await append_roles(bot, new_guild, server['roles'])
     # second: categories, for synced perms
-
+    
     # third: channels, for perm overrides
 
+    # fourth: emojis
+    await aappend_emojis(bot, new_guild, server['emojis'])
     # return the server
     return new_guild

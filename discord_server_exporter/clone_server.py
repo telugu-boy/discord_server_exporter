@@ -47,7 +47,8 @@ async def on_ready():
     biswas = dse.dump_server(gld)
     # target = await dsi.create_server(bot, biswas)
     # await dsi.append_roles(bot, target, biswas)
-    await dsi.write_roles(bot, target, biswas["roles"])
+    # await dsi.write_roles(bot, target, biswas["roles"])
+    await dsi.append_emojis(bot, target, biswas['emojis'])
 
     logging.info("All OK")
 
