@@ -277,21 +277,25 @@ async def write_roles(
         Reverse before applying algorithm because @everyone is the first element in both sequences.
 
         R_s shall be written to R_e with minimal API requests.
+
+        root is always at the start of both sequences. This does not have to exist in R_e or R_s.
+        because the boundaries are not touched in the algorithm (other boundary is @everyone)
         @everyone is always at the end of both sequences.
 
         An edit (including position shift) is equal to creation with a predefined position, in the sense that it is one API request.
 
         1. Find longest common subsequence of R_e and R_s
             * Example (rx is a random role):
-                R_s: Owner, Admin, Mod, Helper, Member, @everyone
-                R_e: Owner, r1, r2, Mod, Member, Admin, @everyone
-                LCS: Owner, Mod, Member, @everyone
+                R_s: root, Owner, Admin, Mod, Helper, Member, @everyone
+                R_e: root, Owner, r1, r2, Mod, Member, Admin, @everyone
+                LCS: root, Owner, Mod, Member, @everyone
 
         2. Iterate through the roles that consecutive elements of the LCS surround in R_e and execute step 3 until finished.
             * Example:
-                R_e: Owner, r1, r2, Mod, Member, Admin, @everyone
-                LCS: Owner, Mod, Member, @everyone
-                |LCS| - 1 iterations: Owner -> Mod (encompasses r1, r2)
+                R_e: root, Owner, r1, r2, Mod, Member, Admin, @everyone
+                LCS: root, Owner, Mod, Member, @everyone
+                |LCS| - 1 iterations: root -> Owner (encompasses nothing)
+                                  Owner -> Mod (encompasses r1, r2)
                                   Mod -> Member (encompasses nothing)
                                   Member -> @everyone (encompasses Admin)
 
@@ -310,13 +314,21 @@ async def write_roles(
                     else (same length): Rewrite only
 
             * Example:
-                R_s: Owner, Admin, Mod, Helper, Member, @everyone
-                R_e: Owner, r1, r2, Mod, Member, Admin, @everyone
-                LCS: Owner, Mod, Member, @everyone
+                R_s: root, Owner, Admin, Mod, Helper, Member, @everyone
+                R_e: root, r3, Owner, r1, r2, Mod, Member, Admin, @everyone
+                LCS: root, Owner, Mod, Member, @everyone
 
-                |LCS| - 1 = 4 - 1 = 3 iterations
+                |LCS| - 1 = 5 - 1 = 4 iterations
 
                 Iteration 1:
+                    Traverse: root -> Owner
+                    Encompassing in R_s: nil
+                    Encompassing in R_e: r3
+                    Create: nil
+                    Rewrite: nil
+                    Delete: r3 (R_e: Owner, r1, r2 Admin, Mod, Member, Admin)
+
+                Iteration 2:
                     Traverse: Owner -> Mod
                     Encompassing in R_s: Admin
                     Encompassing in R_e: r1, r2
@@ -325,7 +337,7 @@ async def write_roles(
                     Delete: r2  (R_e: Owner, Admin, Mod, Member, Admin)
 
                 New R_e: Owner, Admin, Mod, Member, Admin, @everyone
-                Iteration 2:
+                Iteration 3:
                     Traverse: Mod -> Member
                     Encompassing in R_s: Helper
                     Encompassing in R_e: nil
@@ -334,13 +346,13 @@ async def write_roles(
                     Delete: nil
 
                 New R_e: Owner, Admin, Mod, Helper, Member, Admin, @everyone
-                Iteration 3:
+                Iteration 4:
                     Traverse: Member -> @everyone
                     Encompassing in R_s: nil
                     Encompassing in R_e: Admin
                     Create: nil
                     Rewrite: nil
-                    Delete: Admin (R_e: Owner, Admin, Mod, Helper, Member, @everyone)
+                    Delete: Admin (R_e: Owner, Admin, Mod, Helper, Member)
 
                 R_e == R_s. Done.
 
