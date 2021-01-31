@@ -134,4 +134,4 @@ token.txt
 *.user
 
 # Exported servers
-discord_server_exporter/my_servers/
+my_servers/
