@@ -159,14 +159,14 @@ async def append_roles(
     overwrite_prompt=True,
 ):
     # See comment of `write_roles`
-    free_spaces_left = 251 - len(existing_guild.roles)
+    free_spaces_left = 250 - len(existing_guild.roles)
     logging.info(
         f"{free_spaces_left} role spaces available for server '{existing_guild.name}'"
     )
 
     if overwrite_prompt and len(server["roles"]) > free_spaces_left:
         logging.warning(
-            "Not enough free role spaces left for server '{existing_guild.name}'"
+            f"Not enough free role spaces left for server '{existing_guild.name}'"
         )
         inp = input(
             f"""
@@ -177,9 +177,9 @@ async def append_roles(
         ).lower()
 
         if inp[0] == "y":
-            logging.info("Append roles for server '{existing_guild.name}'")
+            logging.info(f"Append roles for server '{existing_guild.name}'")
         else:
-            logging.info("Abort append_roles for server '{existing_guild.name}'")
+            logging.info(f"Abort append_roles for server '{existing_guild.name}'")
 
     # We need to sort the roles so they are in the correct position
     sorted_server_roles = list(
@@ -213,10 +213,86 @@ async def write_roles(
     server: dict,
     overwrite_prompt=True,
 ):
+
+    """
+    Algorithm:
+        Let R_s = server["roles"] (dict)
+        Let R_e = existing_guild.roles (dpy)
+        Reverse before applying algorithm because @everyone is the first element in both sequences.
+
+        R_s shall be written to R_e with minimal API requests.
+        @everyone is always at the end of both sequences.
+
+        An edit (including position shift) is equal to creation with a predefined position, in the sense that it is one API request.
+
+        1. Find longest common subsequence of R_e and R_s
+            * Example (rx is a random role):
+                R_s: Owner, Admin, Mod, Helper, Member, @everyone
+                R_e: Owner, r1, r2, Mod, Member, Admin, @everyone
+                LCS: Owner, Mod, Member, @everyone
+
+        2. Iterate through the roles that consecutive elements of the LCS surround in R_e and execute step 3 until finished.
+            * Example:
+                R_e: Owner, r1, r2, Mod, Member, Admin, @everyone
+                LCS: Owner, Mod, Member, @everyone
+                |LCS| - 1 iterations: Owner -> Mod (encompasses r1, r2)
+                                  Mod -> Member (encompasses nothing)
+                                  Member -> @everyone (encompasses Admin)
+
+        3. Place/edit/delete roles in between LCS roles (do not touch any role in LCS).
+            * Let enc(R_s) and enc(R_e) be the sequence of roles that are encompassed in a given iteration
+              for R_s and R_e respectively. Reminder: R_s is immutable, R_e is being changed
+            * |LCS| - 1 iterations
+
+            * Cases:
+                Encompassing R_s and R_e nil: skip iteration (`continue`)
+                Encompassing R_s nil: Deletion only
+                Encompassing R_e nil: Creation only
+                Encompassing both:
+                    if |enc(R_s)| > |enc(R_e)|: Rewrite, then creation
+                    elif |enc(R_s)| < |enc(R_e)|: Rewrite, then deletion
+                    else (same length): Rewrite only
+
+            * Example:
+                R_s: Owner, Admin, Mod, Helper, Member, @everyone
+                R_e: Owner, r1, r2, Mod, Member, Admin, @everyone
+                LCS: Owner, Mod, Member, @everyone
+
+                |LCS| - 1 = 4 - 1 = 3 iterations
+
+                Iteration 1:
+                    Traverse: Owner -> Mod
+                    Encompassing in R_s: Admin
+                    Encompassing in R_e: r1, r2
+                    Create: nil
+                    Rewrite: r1 -> Admin  (R_e: Owner, Admin, r2, Mod, Member, Admin)
+                    Delete: r2  (R_e: Owner, Admin, Mod, Member, Admin)
+
+                New R_e: Owner, Admin, Mod, Member, Admin, @everyone
+                Iteration 2:
+                    Traverse: Mod -> Member
+                    Encompassing in R_s: Helper
+                    Encompassing in R_e: nil
+                    Rewrite: nil
+                    Create: Helper (R_e: Owner, Admin, Mod, Helper, Member, Admin)
+                    Delete: nil
+
+                New R_e: Owner, Admin, Mod, Helper, Member, Admin, @everyone
+                Iteration 3:
+                    Traverse: Member -> @everyone
+                    Encompassing in R_s: nil
+                    Encompassing in R_e: Admin
+                    Create: nil
+                    Rewrite: nil
+                    Delete: Admin (R_e: Owner, Admin, Mod, Helper, Member, @everyone)
+
+                R_e == R_s. Done.
+
+    """
     # We need `len(server["roles"])` of free spaces for roles.
-    # As discord has a role limit of 250 + @everyone, `251 - len(existing_guild.roles)`
+    # As discord has a role limit of 250 (including @everyone), `250 - len(existing_guild.roles)`
     # is the amount of free spaces left.  Issue an input() to ask user
-    free_spaces_left = 251 - len(existing_guild.roles)
+    free_spaces_left = 250 - len(existing_guild.roles)
     logging.info(
         f"{free_spaces_left} role spaces available for server '{existing_guild.name}'"
     )
@@ -242,7 +318,8 @@ async def write_roles(
         reversed(sorted(server["roles"], key=lambda role: int(role["position"])))
     )
 
-    amt_to_write = min(len(existing_guild.roles), len(sorted_server_roles))
+    # minus 1 because @everyone is included in the list of roles.
+    amt_to_write = min(len(existing_guild.roles), len(sorted_server_roles)) - 1
     everyonedict = role_dict_to_dpy(sorted_server_roles[0])
     # del everyonedict['position']
     # Overwrite the @everyone role
@@ -289,11 +366,15 @@ async def write_roles(
     # Erasing
     else:
         amt_roles_to_erase = len(existing_guild.roles) - len(sorted_server_roles)
-        for i in range(amt_roles_to_erase):
+        # last amt_roles_to_erase from list
+        # Since @everyone is the 0th role, we offset it by 1 to get actual roles.
+        # Reversed so it starts deleting from the last overwritten role
+        roles_to_erase = reversed(existing_guild.roles[1 : amt_roles_to_erase + 1])
+        for role in roles_to_erase:
             logging.info(
-                f"Deleting role '{existing_guild.roles[-1].name}' for server '{existing_guild.name}'"
+                f"Deleting role '{role.name}' for server '{existing_guild.name}'"
             )
-            await existing_guild.roles[0].delete()
+            await role.delete()
 
 
 """
@@ -364,7 +445,10 @@ async def create_server(bot: discord.Client, server: dict):
     # After the server is created, we can add the roles and stuff with other functions
     # which can be used in  `overwrite_server`
     # first: roles
-    await write_roles(bot, new_guild, server)
+    await append_roles(bot, new_guild, server)
     # second: categories, for synced perms
 
     # third: channels, for perm overrides
+
+    # return the server
+    return new_guild
