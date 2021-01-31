@@ -1,0 +1,35 @@
+{
+  "description": "Represents a single member and their roles",
+  "properties": {
+    "name": {
+      "description": "The member's username",
+      "maxLength": 32,
+      "minLength": 2,
+      "type": "string"
+    },
+    "discrim": {
+      "description": "The member's discriminator",
+      "maxLength": 4,
+      "minLength": 4,
+      "type": "string"
+    },
+    "nickname": {
+      "description": "The member's nickname",
+      "maxLength": 32,
+      "minLength": 1,
+      "type": "string"
+    },
+    "id": {
+      "description": "The ID of the member. Used for identification purpose internally",
+      "type": "string"
+    },
+    "roles": {
+      "description": "An array of roles that the member holds",
+      "items": { "type": "string" },
+      "type": "array"
+    }
+  },
+  "required":  ["name", "discrim", "id"],
+  "title": "Discord member",
+  "type": "object"
+}

@@ -1,0 +1,139 @@
+{
+  "permission_override_list_schema": {
+    "description": "A single channel override permission setting for either a role or user",
+    "properties": {
+      "add_reactions": {
+        "type": "boolean"
+      },
+      "administrator": {
+        "type": "boolean"
+      },
+      "attach_files": {
+        "type": "boolean"
+      },
+      "ban_members": {
+        "type": "boolean"
+      },
+      "change_nickname": {
+        "type": "boolean"
+      },
+      "connect": {
+        "type": "boolean"
+      },
+      "create_instant_invite": {
+        "type": "boolean"
+      },
+      "deafen_members": {
+        "type": "boolean"
+      },
+      "embed_links": {
+        "type": "boolean"
+      },
+      "external_emojis": {
+        "type": "boolean"
+      },
+      "kick_members": {
+        "type": "boolean"
+      },
+      "manage_channels": {
+        "type": "boolean"
+      },
+      "manage_emojis": {
+        "type": "boolean"
+      },
+      "manage_guild": {
+        "type": "boolean"
+      },
+      "manage_messages": {
+        "type": "boolean"
+      },
+      "manage_nicknames": {
+        "type": "boolean"
+      },
+      "manage_permissions": {
+        "type": "boolean"
+      },
+      "manage_roles": {
+        "type": "boolean"
+      },
+      "manage_webhooks": {
+        "type": "boolean"
+      },
+      "mention_everyone": {
+        "type": "boolean"
+      },
+      "move_members": {
+        "type": "boolean"
+      },
+      "mute_members": {
+        "type": "boolean"
+      },
+      "priority_speaker": {
+        "type": "boolean"
+      },
+      "read_message_history": {
+        "type": "boolean"
+      },
+      "read_messages": {
+        "type": "boolean"
+      },
+      "send_messages": {
+        "type": "boolean"
+      },
+      "send_tts_messages": {
+        "type": "boolean"
+      },
+      "speak": {
+        "type": "boolean"
+      },
+      "stream": {
+        "type": "boolean"
+      },
+      "use_external_emojis": {
+        "type": "boolean"
+      },
+      "use_voice_activation": {
+        "type": "boolean"
+      },
+      "view_audit_log": {
+        "type": "boolean"
+      },
+      "view_channel": {
+        "type": "boolean"
+      },
+      "view_guild_insights": {
+        "type": "boolean"
+      }
+    },
+    "title": "Discord permission list (OFF 0, ON 1)",
+    "type": "object"
+  },
+
+  "role_permission_override_schema": {
+    "description": "Represents role permission settings for a channel or category",
+    "properties": {
+      "permissions": { "$ref": "#/permission_override_list_schema/properties" },
+      "id": {
+        "description": "The role's ID",
+        "type": "integer"
+      }
+    },
+    "required": ["permissions", "id"],
+    "title": "Discord permission settings",
+    "type": "object"
+  },
+
+  "user_permission_override_schema": {
+    "description": "Represents user permission settings for a channel or category",
+    "properties": {
+      "permissions": { "$ref": "#/permission_override_list_schema/properties" },
+      "id": {
+        "description": "The user's ID",
+        "type": "integer"
+      }
+    },
+    "required": [ "permissions", "id" ],
+    "title": "Discord permission settings",
+    "type": "object"
+  }
+}

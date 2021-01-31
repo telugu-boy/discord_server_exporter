@@ -1,0 +1,40 @@
+{
+  "description": "Represents a single text channel",
+  "properties": {
+    "id": {
+      "description": "The ID of the text channel. Used for identification purpose internally",
+      "type": "string"
+    },
+    "name": {
+      "description": "The name of the channel",
+      "type": "string"
+    },
+    "news": {
+      "description": "True for news channel, false otherwise",
+      "type": "boolean"
+    },
+    "nsfw": {
+      "description": "True for NSFW channel, false otherwise",
+      "type": "boolean"
+    },
+    "role_permission_overrides": {
+      "description": "An array of role permission overrides",
+      "items": { "$ref": "permission_override_schemas.json#/role_permission_override_schema/properties" },
+      "type": "array"
+    },
+    "slowmode": {
+      "description": "The slowmode cooldown for this channel in seconds (0 for none)",
+      "maximum": 21600,
+      "minimum": 0,
+      "type": "integer"
+    },
+    "user_permission_overrides": {
+      "description": "An array of role permission overrides",
+      "items": { "$ref": "permission_override_schemas.json#/user_permission_override_schema/properties" },
+      "type": "array"
+    }
+  },
+  "required": [ "name", "slowmode" ],
+  "title": "Discord text channel",
+  "type": "object"
+}

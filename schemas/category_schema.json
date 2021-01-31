@@ -1,0 +1,36 @@
+{
+  "description": "Represents a single category and it's child channels",
+  "properties": {
+    "name": {
+      "description": "The name of the cateogory",
+      "type": "string"
+    },
+    "id": {
+      "description": "The ID of the text channel. Used for identification purpose internally",
+      "type": "integer"
+    },
+    "text_channels": {
+      "description": "The text channels that belong to this category",
+      "items": { "$ref": "text_channel_schema.json#/properties" },
+      "type": "array"
+    },
+    "voice_channels": {
+      "description": "The voice channels that belong to this category",
+      "items": { "$ref": "voice_channel_schema.json#/properties" },
+      "type": "array"
+    },
+    "role_permission_overrides": {
+      "description": "An array of role permission overrides",
+      "items": { "$ref": "permission_override_schemas.json#/role_permission_override_schema/properties" },
+      "type": "array"
+    },
+    "user_permission_overrides": {
+      "description": "An array of role permission overrides",
+      "items": { "$ref": "permission_override_schemas.json#/user_permission_override_schema/properties" },
+      "type": "array"
+    }
+  },
+  "required": [ "name" ],
+  "title": "Discord category",
+  "type": "object"
+}

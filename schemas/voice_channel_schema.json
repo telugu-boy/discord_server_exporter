@@ -1,0 +1,38 @@
+{
+  "description": "Represents a single voice channel",
+  "properties": {
+    "bitrate": {
+      "description": "The voice channel bitrate",
+      "maximum": 384000,
+      "minimum": 8000,
+      "type": "integer"
+    },
+    "id": {
+      "description": "The ID of the voice channel. Used for identification purpose internally",
+      "type": "string"
+    },
+    "name": {
+      "description": "The name of the channel",
+      "type": "string"
+    },
+    "role_permission_overrides": {
+      "description": "An array of role permission overrides",
+      "items": { "$ref": "permission_override_schemas.json#/role_permission_override_schema/properties" },
+      "type": "array"
+    },
+    "user_limit": {
+      "description": "The user limit for this channel",
+      "maximum": 99,
+      "minimum": 0,
+      "type": "integer"
+    },
+    "user_permission_overrides": {
+      "description": "An array of role permission overrides",
+      "items": { "$ref": "permission_override_schemas.json#/user_permission_override_schema/properties" },
+      "type": "array"
+    }
+  },
+  "required": [ "name", "bitrate", "user_limit" ],
+  "title": "Discord voice channel",
+  "type": "object"
+}
