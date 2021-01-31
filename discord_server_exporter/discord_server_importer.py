@@ -24,6 +24,21 @@ from urllib.request import Request, urlopen
 import discord
 import jsonschema
 
+# This header is needed or else we get 403 forbidden '-'
+# The user agent and accept* are copied from a random Chrome request
+req_hdr = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.104 Safari/537.36",
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+    "Accept-Charset": "ISO-8859-1,utf-8;q=0.7,*;q=0.3",
+    "Accept-Encoding": "gzip, deflate, br",
+    "Accept-Language": "en-US,en;q=0.9",
+    "Connection": "keep-alive",
+}
+
+# emoji slot count lookup table
+boost_emoji_count = {0: 50, 1: 100, 2: 150, 3: 250}
+
+
 """
 Gets a server icon under 10mb if the original is over
 
@@ -35,17 +50,6 @@ Arguments:
 
 
 def get_icon_under_10mb(url: str):
-    # This header is needed or else we get 403 forbidden '-'
-    # The user agent and accept* are copied from a random Chrome request
-    hdr = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.104 Safari/537.36",
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-        "Accept-Charset": "ISO-8859-1,utf-8;q=0.7,*;q=0.3",
-        "Accept-Encoding": "gzip, deflate, br",
-        "Accept-Language": "en-US,en;q=0.9",
-        "Connection": "keep-alive",
-    }
-
     icon_sizes = (2048, 1024, 512, 256, 128)
 
     # Sorted in ascending order of size.  GIFs are added to the front
@@ -85,7 +89,7 @@ def get_icon_under_10mb(url: str):
             logging.info(f"Trying {format} and {icon_size}")
 
             candidate_icon_url = f"{icon_url_no_ext}.{format}?size={icon_size}"
-            req = Request(candidate_icon_url, None, hdr)
+            req = Request(candidate_icon_url, None, req_hdr)
             server_icon_req = urlopen(req)
 
             file_size = int(server_icon_req.info()["Content-Length"])
@@ -95,6 +99,61 @@ def get_icon_under_10mb(url: str):
                     f"Found suitable icon with extension {format}, resolution {icon_size} ({file_size}b)"
                 )
                 return server_icon_req.read()
+
+
+"""
+Append emojis to the end of the list.
+This will not add the last emojis passed in if they cannot fit.
+
+Arguments:
+    bot -- a discord.py client object.
+    existing_guild -- the target guild.
+    emojis -- a discord emoji list, each element following the emoji schema
+"""
+
+
+def append_emojis(
+    bot: discord.Client, existing_guild: discord.Guild, emojis: list, append_prompt=True
+):
+    amt_existing_emojis = len(existing_guild.emojis)
+    amt_emoji_slots = boost_emoji_count[existing_guild.premium_tier]
+    # premium tier is an int
+    free_spaces_left = amt_emoji_slots - amt_existing_emojis
+
+    logging.info(
+        f"{free_spaces_left} emoji spaces available for server '{existing_guild.name}'"
+    )
+
+    if append_prompt and amt_existing_emojis > free_spaces_left:
+        logging.warning(
+            f"Not enough free role spaces left for server '{existing_guild.name}'"
+        )
+        inp = input(
+            f"""
+        There are too many emojis to fit in server '{existing_guild.name}'.
+        The bottom {len(emojis) - free_spaces_left} emojis will not be added.
+        Use `write_emojis` to completely replace emojis.
+        Y/n : """
+        ).lower()
+
+        if inp[0] == "y":
+            logging.info(f"Append emojis for server '{existing_guild.name}'")
+        else:
+            logging.info(f"Abort append_emojis for server '{existing_guild.name}'")
+
+    for emoji in emojis:
+        req = Request(emoji["url"], None, req_hdr)
+        emoji_req = urlopen(req)
+
+        file_size = int(server_icon_req.info()["Content-Length"])
+        logging.info(
+            f"Appending emoji '{emoji['name']}' for server '{existing_guild.name}'"
+        )
+
+        emoji_download = emoji_req.read()
+        logging.info(f"Downloaded emoji '{emoji['name']}' ({file_size}b)")
+
+        # await existing_guild.create_custom_emoji(name=emoji['name'], image=emoji_download, reason="Automatic emoji appending")
 
 
 """
@@ -148,15 +207,12 @@ This will not touch the @everyone role.
 Arguments:
     bot -- a discord.py client object.
     existing_guild -- the target guild.
-    server -- a discord server dict following the server schema
+    roles -- a discord roles list, each element following the role schema
 """
 
 
 async def append_roles(
-    bot: discord.Client,
-    existing_guild: discord.Guild,
-    server: dict,
-    overwrite_prompt=True,
+    bot: discord.Client, existing_guild: discord.Guild, roles: list, append_prompt=True
 ):
     # See comment of `write_roles`
     free_spaces_left = 250 - len(existing_guild.roles)
@@ -164,14 +220,14 @@ async def append_roles(
         f"{free_spaces_left} role spaces available for server '{existing_guild.name}'"
     )
 
-    if overwrite_prompt and len(server["roles"]) > free_spaces_left:
+    if append_prompt and len(roles) > free_spaces_left:
         logging.warning(
             f"Not enough free role spaces left for server '{existing_guild.name}'"
         )
         inp = input(
             f"""
         There are too many roles to fit in server '{existing_guild.name}'.
-        The bottom {len(server["roles"]) - free_spaces_left - 1} roles will not be added.
+        The bottom {len(roles) - free_spaces_left - 1} roles will not be added.
         Use `write_roles` to overwrite roles.
         Y/n : """
         ).lower()
@@ -183,7 +239,7 @@ async def append_roles(
 
     # We need to sort the roles so they are in the correct position
     sorted_server_roles = list(
-        reversed(sorted(server["roles"], key=lambda role: int(role["position"])))
+        reversed(sorted(roles, key=lambda role: int(role["position"])))
     )
 
     for idx in range(free_spaces_left):
@@ -216,7 +272,7 @@ async def write_roles(
 
     """
     Algorithm:
-        Let R_s = server["roles"] (dict)
+        Let R_s = roles (dict)
         Let R_e = existing_guild.roles (dpy)
         Reverse before applying algorithm because @everyone is the first element in both sequences.
 
@@ -289,8 +345,9 @@ async def write_roles(
                 R_e == R_s. Done.
 
     """
-    # We need `len(server["roles"])` of free spaces for roles.
-    # As discord has a role limit of 250 (including @everyone), `250 - len(existing_guild.roles)`
+    # We need `len(roles)` of free spaces for roles.
+    # As discord has a role limit of 250 (including @everyone), `250 -
+    # len(existing_guild.roles)`
     # is the amount of free spaces left.  Issue an input() to ask user
     free_spaces_left = 250 - len(existing_guild.roles)
     logging.info(
@@ -315,7 +372,7 @@ async def write_roles(
 
     # We need to sort the roles so they are in the correct position
     sorted_server_roles = list(
-        reversed(sorted(server["roles"], key=lambda role: int(role["position"])))
+        reversed(sorted(roles, key=lambda role: int(role["position"])))
     )
 
     # minus 1 because @everyone is included in the list of roles.
@@ -367,7 +424,8 @@ async def write_roles(
     else:
         amt_roles_to_erase = len(existing_guild.roles) - len(sorted_server_roles)
         # last amt_roles_to_erase from list
-        # Since @everyone is the 0th role, we offset it by 1 to get actual roles.
+        # Since @everyone is the 0th role, we offset it by 1 to get actual
+        # roles.
         # Reversed so it starts deleting from the last overwritten role
         roles_to_erase = reversed(existing_guild.roles[1 : amt_roles_to_erase + 1])
         for role in roles_to_erase:
@@ -442,8 +500,9 @@ async def create_server(bot: discord.Client, server: dict):
         )
         return None
 
-    # After the server is created, we can add the roles and stuff with other functions
-    # which can be used in  `overwrite_server`
+    # After the server is created, we can add the roles and stuff with other
+    # functions
+    # which can be used in `overwrite_server`
     # first: roles
     await append_roles(bot, new_guild, server)
     # second: categories, for synced perms
