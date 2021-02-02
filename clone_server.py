@@ -43,12 +43,13 @@ async def on_ready():
     logging.info("Bot started")
 
     gld = bot.get_guild(guildid)
-    target = bot.get_guild(805402216679997452)
+    target = bot.get_guild(805959035873394708)
     biswas = dse.dump_server(gld)
-    target = await dsi.create_server(bot, biswas)
-    # await dsi.append_roles(bot, target, biswas)
-    # await dsi.write_roles(bot, target, biswas["roles"])
-    # await dsi.write_emojis(bot, target, biswas['emojis'])
+    target = await dsi.create_server(bot, biswas, False)
+    # await dsi.append_roles(target, biswas)
+    # await dsi.write_roles(target, biswas["roles"])
+    # await dsi.write_emojis(target, biswas['emojis'])
+    # await dsi.append_categories( target, biswas['categories'])
 
     logging.info("All OK")
 

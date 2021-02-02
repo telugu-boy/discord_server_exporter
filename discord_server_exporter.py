@@ -134,11 +134,11 @@ def get_permission_overrides(channel: discord.abc.ChannelType) -> dict:
 
         if isinstance(entity, discord.Role):
             res["roles"].append(
-                {"id": entity.id, "permissions": permission_override_list}
+                {"id": str(entity.id), "name": entity.name, "position": entity.position, "permissions": permission_override_list}
             )
         elif isinstance(entity, discord.User):
             res["users"].append(
-                {"id": entity.id, "permissions": permission_override_list}
+                {"id": str(entity.id), "permissions": permission_override_list}
             )
 
     return res

@@ -115,7 +115,13 @@
       "permissions": { "$ref": "#/permission_override_list_schema/properties" },
       "id": {
         "description": "The role's ID",
-        "type": "integer"
+        "type": "string"
+      },
+      "name": {
+        "$ref": "role_schema.json#/properties/name"
+      },
+      "position": {
+        "$ref": "role_schema.json#/properties/position"
       }
     },
     "required": ["permissions", "id"],
@@ -129,7 +135,7 @@
       "permissions": { "$ref": "#/permission_override_list_schema/properties" },
       "id": {
         "description": "The user's ID",
-        "type": "integer"
+        "type": "string"
       }
     },
     "required": [ "permissions", "id" ],
