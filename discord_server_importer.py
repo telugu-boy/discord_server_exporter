@@ -116,7 +116,7 @@ Arguments:
 
 
 async def append_emojis(
-   existing_guild: discord.Guild, emojis: list, append_prompt=True
+    existing_guild: discord.Guild, emojis: list, append_prompt=True
 ):
     logging.info(f"Appending emojis for server '{existing_guild.name}'")
     amt_existing_emojis = len(existing_guild.emojis)
@@ -153,13 +153,19 @@ async def append_emojis(
         file_size = int(emoji_req.info()["Content-Length"])
         # 256kb limit
         if file_size > 256000:
-            logging.info(f"Emoji '{emoji['name']}' is {file_size}b > 256kb and will be skipped.")
+            logging.info(
+                f"Emoji '{emoji['name']}' is {file_size}b > 256kb and will be skipped."
+            )
             continue
 
         emoji_download = emoji_req.read()
-        logging.info(f"Downloaded and appending emoji '{emoji['name']}' ({file_size}b) for server '{existing_guild.name}'")
+        logging.info(
+            f"Downloaded and appending emoji '{emoji['name']}' ({file_size}b) for server '{existing_guild.name}'"
+        )
 
-        await existing_guild.create_custom_emoji(name=emoji['name'], image=emoji_download, reason="Automatic emoji appending")
+        await existing_guild.create_custom_emoji(
+            name=emoji["name"], image=emoji_download, reason="Automatic emoji appending"
+        )
 
 
 """
@@ -171,8 +177,10 @@ Arguments:
     existing_guild -- the target guild.
     emojis -- a discord emoji list, each element following the emoji schema
 """
+
+
 async def write_emojis(
- existing_guild: discord.Guild, emojis: list, overwrite_prompt=True
+    existing_guild: discord.Guild, emojis: list, overwrite_prompt=True
 ):
     logging.info(f"Writing emojis for server '{existing_guild.name}'")
     if overwrite_prompt:
@@ -196,7 +204,8 @@ async def write_emojis(
         await emoji.delete()
 
     logging.info(f"Pass control to `append_emojis` for server '{existing_guild.name}'")
-    await append_emojis(bot, existing_guild. emojis, False)
+    await append_emojis(bot, existing_guild.emojis, False)
+
 
 """
 Converts a role dict to a discord.py create_role compatible kwargs dict.
@@ -253,8 +262,7 @@ Arguments:
 """
 
 
-async def append_roles( existing_guild: discord.Guild, roles: list, append_prompt=True
-):
+async def append_roles(existing_guild: discord.Guild, roles: list, append_prompt=True):
     logging.info(f"Appending roles for server '{existing_guild.name}'")
     # See comment of `write_roles`
     free_spaces_left = 250 - len(existing_guild.roles)
@@ -282,8 +290,10 @@ async def append_roles( existing_guild: discord.Guild, roles: list, append_promp
 
     # We need to sort the roles so they are in the correct position
     # Pop off the last one because we do not want @everyone
-    sorted_server_roles = list(reversed(sorted(roles, key=lambda role: int(role["position"]))))[:-1]
-    
+    sorted_server_roles = list(
+        reversed(sorted(roles, key=lambda role: int(role["position"])))
+    )[:-1]
+
     for role in sorted_server_roles:
         logging.info(
             f"Appending role '{role['name']}' for server '{existing_guild.name}'"
@@ -305,9 +315,7 @@ Arguments:
 
 
 async def write_roles(
-    existing_guild: discord.Guild,
-    roles: list,
-    overwrite_prompt=True,
+    existing_guild: discord.Guild, roles: list, overwrite_prompt=True
 ):
     """
     Algorithm:
@@ -488,6 +496,7 @@ async def write_roles(
             )
             await role.delete()
 
+
 """
 Converts a dict conforming to permission_override_schemas.json#/permission_override_list_schema
 to a dpy PermissionOverwrite object
@@ -495,44 +504,95 @@ to a dpy PermissionOverwrite object
 Arguments:
     override_dict -- the override dictionary
 """
+
+
 def override_to_dpy(override_dict: dict):
-    return discord.PermissionOverwrite(**{k : v for (k, v) in override_dict.items()})
+    return discord.PermissionOverwrite(**{k: v for (k, v) in override_dict.items()})
+
+
+"""
+Turns role overrides for text, voice and category channels to a dpy compatible PermissionOverwrite dict.
+
+Arguments:
+    bot -- a discord.py client object. needed for user overrides
+    channels -- a list of discord.abc.GuildChannel
+"""
+
+
+def get_dpy_overrides(bot: discord.Client, channels: list):
+    pass
+
 
 """
 Appends categories conforming to category_schema.json to a guild
 
 Arguments:
-    bot -- a discord.py client object
+    bot -- a discord.py client object. needed for user overrides
     existing_guild -- the target guild
     categories -- a discord category list, each element following the category schema
 
 """
-async def append_categories(existing_guild: discord.Guild, categories: list, add_channels=True, add_perms=True, append_prompt=True):
-    logging.info(f"Appending categories roles for server '{existing_guild.name}' (add_channels={add_channels})")
+
+
+async def append_categories(
+    bot: discord.Client,
+    existing_guild: discord.Guild,
+    categories: list,
+    add_channels=True,
+    add_perms=True,
+    append_prompt=True,
+):
+    logging.info(
+        f"Appending categories roles for server '{existing_guild.name}' (add_channels={add_channels})"
+    )
 
     # we need an actual api request to make sure the guild is updated
     existing_guild_roles = await existing_guild.fetch_roles()
     # this returns @everyone followed by the role heirarchy, #1 role at idx 1
     existing_guild_roles.append(existing_guild_roles.pop(0))
     existing_guild_roles.reverse()
-    
+
     for category in categories:
-        if category['name'] == "":
+        if category["name"] == "":
             # Uncategorized channels have an empty category name
             pass
         else:
             overrides = {}
             for role_override in category["role_permission_overrides"]:
-                role_pos = role_override['position']
+                role_pos = role_override["position"]
                 candidate_role = existing_guild_roles[role_pos]
                 if candidate_role.name == role_override["name"]:
-                    logging.info(f"Adding override for role '{role_override['name']}' for channel '{category['name']}' for server '{existing_guild.name}'")
+                    logging.info(
+                        f"Adding override for role '{role_override['name']}' for category '{category['name']}' for server '{existing_guild.name}'"
+                    )
 
-                    overrides[candidate_role] = override_to_dpy(role_override['permissions'])
+                    overrides[candidate_role] = override_to_dpy(
+                        role_override["permissions"]
+                    )
+                else:
+                    logging.warning(
+                        f"Skipping role override for category '{category['name']}' for server '{existing_guild.name}': candidate role '{candidate_role.name}' at position {role_pos} does not share the same name as override '{role_override['name']}'"
+                    )
 
-            logging.info(f"Creating category '{category['name']}' for server '{existing_guild.name}'")
-            created_category = await existing_guild.create_category(name=category['name'], overwrites=overrides)
-    
+            for user_override in category["user_permission_overrides"]:
+                usr = bot.get_user(int(user_override["id"]))
+                if usr:
+                    logging.info(
+                        f"Adding override for user '{usr.name}' for category '{category['name']}' for server '{existing_guild.name}'"
+                    )
+                    overrides[usr] = override_to_dpy(user_override["permissions"])
+                else:
+                    logging.warning(
+                        f"Skipping user override for category '{category['name']}' for server '{existing_guild.name}': candidate user '{candidate_role.name}' does not exist"
+                    )
+
+            logging.info(
+                f"Creating category '{category['name']}' for server '{existing_guild.name}'"
+            )
+            created_category = await existing_guild.create_category(
+                name=category["name"], overwrites=overrides
+            )
+
 
 """
 Creates a guild with a dictionary conforming to the server schema
@@ -550,7 +610,7 @@ Exceptions:
 
 async def create_server(bot: discord.Client, server: dict, add_emojis=True):
     logging.info("Validating server JSON...")
-    
+
     server_schema_path = "schemas/server_schema.json"
     with open(server_schema_path) as f:
         server_schema = json.load(f)
@@ -603,20 +663,20 @@ async def create_server(bot: discord.Client, server: dict, add_emojis=True):
     # functions
     # which can be used in `overwrite_server`
     # first: roles
-    await append_roles(new_guild, server['roles'])
+    await append_roles(new_guild, server["roles"])
 
     # second: categories, for synced perms
-    await append_categories(new_guild, server['categories'])
+    await append_categories(new_guild, server["categories"])
     # third: channels, for perm overrides
 
     # fourth: emojis
     if add_emojis:
-        await append_emojis(new_guild, server['emojis'])
-    '''
+        await append_emojis(new_guild, server["emojis"])
+    """
     await asyncio.gather(
         append_roles(bot, new_guild, server['roles']),
         append_emojis(bot, new_guild, server['emojis']),
     )
-    '''
+    """
     # return the server
     return new_guild
