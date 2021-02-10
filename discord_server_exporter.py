@@ -134,7 +134,12 @@ def get_permission_overrides(channel: discord.abc.ChannelType) -> dict:
 
         if isinstance(entity, discord.Role):
             res["roles"].append(
-                {"id": str(entity.id), "name": entity.name, "position": entity.position, "permissions": permission_override_list}
+                {
+                    "id": str(entity.id),
+                    "name": entity.name,
+                    "position": entity.position,
+                    "permissions": permission_override_list,
+                }
             )
         elif isinstance(entity, discord.User):
             res["users"].append(
@@ -160,7 +165,7 @@ def conv_text_channel_obj(
     res["name"] = channel.name
     res["slowmode"] = channel.slowmode_delay
     res["nsfw"] = channel.is_nsfw()
-    res["news"] = channel.is_news()
+    res["topic"] = channel.topic
     res["id"] = str(channel.id)
 
     perms = get_permission_overrides(channel)

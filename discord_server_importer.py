@@ -512,15 +512,116 @@ def override_to_dpy(override_dict: dict):
 
 """
 Turns role overrides for text, voice and category channels to a dpy compatible PermissionOverwrite dict.
+This is async because of fetch_roles() API call. This is needed because the guild object is not guaranteed
+to have updated by the time this function is called.
 
 Arguments:
     bot -- a discord.py client object. needed for user overrides
-    channels -- a list of discord.abc.GuildChannel
+    abcchannel -- either a category, text or voice channel as specified by the schema
+    existing_guild -- a guild object with the roles in place
 """
 
 
-def get_dpy_overrides(bot: discord.Client, channels: list):
-    pass
+async def get_dpy_overrides(
+    bot: discord.Client, existing_guild: discord.Guild, abcchannel: dict
+):
+    overrides = {}
+
+    # we need an actual api request to make sure the guild is updated
+    existing_guild_roles = await existing_guild.fetch_roles()
+    # this returns @everyone followed by the role heirarchy, #1 role at idx 1
+    existing_guild_roles.append(existing_guild_roles.pop(0))
+    existing_guild_roles.reverse()
+
+    for role_override in abcchannel["role_permission_overrides"]:
+        role_pos = role_override["position"]
+        candidate_role = existing_guild_roles[role_pos]
+        if candidate_role.name == role_override["name"]:
+            logging.info(
+                f"Adding override for role '{role_override['name']}' for abcchannel '{abcchannel['name']}' for server '{existing_guild.name}'"
+            )
+
+            overrides[candidate_role] = override_to_dpy(role_override["permissions"])
+        else:
+            logging.warning(
+                f"Skipping role override for abcchannel '{abcchannel['name']}' for server '{existing_guild.name}': candidate role '{candidate_role.name}' at position {role_pos} does not share the same name as override '{role_override['name']}'"
+            )
+
+    for user_override in abcchannel["user_permission_overrides"]:
+        usr = bot.get_user(int(user_override["id"]))
+        if usr:
+            logging.info(
+                f"Adding override for user '{usr.name}' for abcchannel '{abcchannel['name']}' for server '{existing_guild.name}'"
+            )
+            overrides[usr] = override_to_dpy(user_override["permissions"])
+        else:
+            logging.warning(
+                f"Skipping user override for abcchannel '{abcchannel['name']}' for server '{existing_guild.name}': candidate user '{candidate_role.name}' does not exist"
+            )
+    return overrides
+
+
+"""
+Adds a dpy textchannel to a category, None if uncategorized
+
+Arguments:
+    bot -- a discord.py client object. needed for user overrides
+    channel -- the text channel following the textchannel schema
+    category -- the category which to add the channel to
+
+"""
+
+
+async def append_textchannel(
+    bot: discord.Client,
+    textchannel: dict,
+    category: discord.CategoryChannel,
+    add_perms=True,
+):
+    existing_guild = category.guild
+    logging.info(
+        f"Append text channel '{textchannel['name']}' for category '{category.name}' for server '{existing_guild.name}'"
+    )
+    overrides = (
+        await get_dpy_overrides(bot, existing_guild, textchannel) if add_perms else {}
+    )
+    await existing_guild.create_text_channel(
+        name=textchannel["name"],
+        overwrites=overrides,
+        category=category,
+        topic=textchannel["topic"],
+        slowmode_delay=textchannel["slowmode"],
+    )
+
+
+"""
+Adds a dpy voice channel to a category, None if uncategorized
+
+Arguments:
+    bot -- a discord.py client object. needed for user overrides
+    channel -- the voice channel following the voicechannel schema
+    category -- the category which to add the channel to
+
+"""
+
+
+async def append_voicechannel(
+    bot: discord.Client, voicechannel: dict, category: discord.CategoryChannel
+):
+    existing_guild = category.guild
+    logging.info(
+        f"Append voice channel '{voicechannel['name']}' for category '{category.name}' for server '{existing_guild.name}'"
+    )
+    overrides = (
+        await get_dpy_overrides(bot, existing_guild, voicechannel) if add_perms else {}
+    )
+    await existing_guild.create_voice_channel(
+        name=voicechannel["name"],
+        overwrites=overrides,
+        category=category,
+        bitrate=voicechannel["bitrate"],
+        user_limit=voicechannel["user_limit"],
+    )
 
 
 """
@@ -546,45 +647,16 @@ async def append_categories(
         f"Appending categories roles for server '{existing_guild.name}' (add_channels={add_channels})"
     )
 
-    # we need an actual api request to make sure the guild is updated
-    existing_guild_roles = await existing_guild.fetch_roles()
-    # this returns @everyone followed by the role heirarchy, #1 role at idx 1
-    existing_guild_roles.append(existing_guild_roles.pop(0))
-    existing_guild_roles.reverse()
-
     for category in categories:
-        if category["name"] == "":
-            # Uncategorized channels have an empty category name
-            pass
-        else:
-            overrides = {}
-            for role_override in category["role_permission_overrides"]:
-                role_pos = role_override["position"]
-                candidate_role = existing_guild_roles[role_pos]
-                if candidate_role.name == role_override["name"]:
-                    logging.info(
-                        f"Adding override for role '{role_override['name']}' for category '{category['name']}' for server '{existing_guild.name}'"
-                    )
+        # Uncategorized channels have an empty category name
+        created_category = None
 
-                    overrides[candidate_role] = override_to_dpy(
-                        role_override["permissions"]
-                    )
-                else:
-                    logging.warning(
-                        f"Skipping role override for category '{category['name']}' for server '{existing_guild.name}': candidate role '{candidate_role.name}' at position {role_pos} does not share the same name as override '{role_override['name']}'"
-                    )
-
-            for user_override in category["user_permission_overrides"]:
-                usr = bot.get_user(int(user_override["id"]))
-                if usr:
-                    logging.info(
-                        f"Adding override for user '{usr.name}' for category '{category['name']}' for server '{existing_guild.name}'"
-                    )
-                    overrides[usr] = override_to_dpy(user_override["permissions"])
-                else:
-                    logging.warning(
-                        f"Skipping user override for category '{category['name']}' for server '{existing_guild.name}': candidate user '{candidate_role.name}' does not exist"
-                    )
+        if category["name"] != "":
+            overrides = (
+                await get_dpy_overrides(bot, existing_guild, category)
+                if add_perms
+                else {}
+            )
 
             logging.info(
                 f"Creating category '{category['name']}' for server '{existing_guild.name}'"
@@ -592,6 +664,13 @@ async def append_categories(
             created_category = await existing_guild.create_category(
                 name=category["name"], overwrites=overrides
             )
+
+        if add_channels:
+            for text_channel in category["text_channels"]:
+                await append_textchannel(bot, text_channel, created_category)
+
+            for voice_channel in category["voice_channels"]:
+                await append_voicechannel(bot, voice_channel, created_category)
 
 
 """
@@ -666,10 +745,10 @@ async def create_server(bot: discord.Client, server: dict, add_emojis=True):
     await append_roles(new_guild, server["roles"])
 
     # second: categories, for synced perms
-    await append_categories(new_guild, server["categories"])
-    # third: channels, for perm overrides
+    # this adds channels with their perm overrides.
+    await append_categories(bot, new_guild, server["categories"])
 
-    # fourth: emojis
+    # third: emojis
     if add_emojis:
         await append_emojis(new_guild, server["emojis"])
     """
