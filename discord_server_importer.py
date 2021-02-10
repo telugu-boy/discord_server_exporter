@@ -618,12 +618,19 @@ async def append_voicechannel(
     overrides = (
         await get_dpy_overrides(bot, existing_guild, voicechannel) if add_perms else {}
     )
+    ulimit = voicechannel["user_limit"] if voicechannel["user_limit"] != 0 else None
+    bitrate = min(voicechannel["bitrate"], existing_guild.bitrate_limit)
+    if voicechannel["bitrate"] > existing_guild.bitrate_limit:
+        logging.warning(
+            "Bitrate limited to {existing_guild.bitrate_limit}bps from {voicechannel['bitrate']}bps for '{voicechannel['name']}' for server '{existing_guild.name}'"
+        )
+
     await existing_guild.create_voice_channel(
         name=voicechannel["name"],
         overwrites=overrides,
         category=category,
-        bitrate=voicechannel["bitrate"],
-        user_limit=voicechannel["user_limit"],
+        bitrate=bitrate,
+        user_limit=ulimit,
     )
 
 
