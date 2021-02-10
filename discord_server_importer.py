@@ -606,7 +606,10 @@ Arguments:
 
 
 async def append_voicechannel(
-    bot: discord.Client, voicechannel: dict, category: discord.CategoryChannel
+    bot: discord.Client,
+    voicechannel: dict,
+    category: discord.CategoryChannel,
+    add_perms=True,
 ):
     existing_guild = category.guild
     logging.info(
