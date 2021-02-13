@@ -44,7 +44,7 @@ async def on_ready():
 
     gld = bot.get_guild(guildid)
     biswas = dse.dump_server(gld)
-    target = await dsi.create_server(bot, biswas, False)
+    target = await dsi.create_server(bot, biswas)
     # await dsi.append_roles(target, biswas)
     # await dsi.write_roles(target, biswas["roles"])
     # await dsi.write_emojis(target, biswas['emojis'])

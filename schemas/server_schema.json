@@ -72,7 +72,7 @@
       "type": "string"
     }
   },
-  "required": [ "name", "icon_url", "voice_region", "system_message_channel", "join_broadcast", "boost_broadcast", "default_notifications", "verification_level", "content_filter" ],
+  "required": [ "name", "icon_url", "voice_region", "join_broadcast", "boost_broadcast", "default_notifications", "verification_level", "content_filter" ],
   "title": "Discord server",
   "type": "object"
 }
