@@ -204,7 +204,7 @@ async def write_emojis(
         await emoji.delete()
 
     logging.info(f"Pass control to `append_emojis` for server '{existing_guild.name}'")
-    await append_emojis(bot, existing_guild.emojis, False)
+    await append_emojis(existing_guild.emojis, False)
 
 
 """
@@ -507,6 +507,7 @@ Arguments:
 
 
 def override_to_dpy(override_dict: dict):
+    # dict comprehension because the structure might change later
     return discord.PermissionOverwrite(**{k: v for (k, v) in override_dict.items()})
 
 
@@ -586,6 +587,28 @@ async def append_textchannel(
         await get_dpy_overrides(bot, existing_guild, textchannel) if add_perms else {}
     )
     await existing_guild.create_text_channel(
+        name=textchannel["name"],
+        overwrites=overrides,
+        category=category,
+        topic=textchannel["topic"],
+        slowmode_delay=textchannel["slowmode"],
+    )
+
+
+async def write_textchannel(
+    bot: discord.Client,
+    textchannel: dict,
+    existing_textchannel: discord.TextChannel,
+    add_perms=True,
+):
+    existing_guild = category.guild
+    logging.info(
+        f"Write text channel '{textchannel['name']}' for category '{category.name}' for server '{existing_guild.name}'"
+    )
+    overrides = (
+        await get_dpy_overrides(bot, existing_guild, textchannel) if add_perms else {}
+    )
+    await existing_textchannel.edit(
         name=textchannel["name"],
         overwrites=overrides,
         category=category,
