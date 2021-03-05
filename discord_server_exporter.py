@@ -18,7 +18,19 @@
 
 import logging
 
+import os
 import discord
+import time
+from urllib.request import Request, urlopen
+
+req_hdr = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.104 Safari/537.36",
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+    "Accept-Charset": "ISO-8859-1,utf-8;q=0.7,*;q=0.3",
+    "Accept-Encoding": "gzip, deflate, br",
+    "Accept-Language": "en-US,en;q=0.9",
+    "Connection": "keep-alive",
+}
 
 """
 Maps a role to a dictionary that conforms to the role schema.
@@ -92,11 +104,26 @@ Arguments:
 """
 
 
-def dump_emojis(guild: discord.Guild) -> list:
+def dump_emojis(guild: discord.Guild, export_emojis=False, dir_prefix=None) -> list:
     logging.info(f"Dumping emojis for server '{guild.name}'")
     res = []
+    if export_emojis:
+        # seperates different exports by appending a unix timestamp
+        emoji_location = f"{dir_prefix}/{guild.id}"
+        os.makedirs(emoji_location)
+
     for emoji in guild.emojis:
         res.append(conv_emoji_obj(emoji))
+        if export_emojis:
+            logging.info(f"Downloading emoji '{emoji.name}' for server '{guild.name}'")
+            req = Request(str(emoji.url), None, req_hdr)
+            server_icon_req = urlopen(req)
+
+            # gets extension of the icon from the url
+            icon_ext = str(emoji.url).split(".")[-1].split("?")[0]
+
+            with open(f"{emoji_location}/{emoji.name}.{icon_ext}", "wb") as f:
+                f.write(server_icon_req.read())
     return res
 
 
@@ -435,7 +462,7 @@ Arguments:
 """
 
 
-def dump_server(guild: discord.Guild, export_members=False) -> dict:
+def dump_server(guild: discord.Guild, export_emojis=True, export_members=False) -> dict:
     logging.info(f"Dumping server '{guild.name}'")
     res = {}
 
@@ -460,7 +487,7 @@ def dump_server(guild: discord.Guild, export_members=False) -> dict:
     res["default_notifications"] = bool(guild.default_notifications.value)
     res["verification_level"] = guild.verification_level.value
     res["content_filter"] = guild.explicit_content_filter.value
-    res["emojis"] = dump_emojis(guild)
+    res["emojis"] = dump_emojis(guild, export_emojis, f"exported_emojis_{int(time.time())}")
     res["roles"] = dump_roles(guild)
     res["categories"] = dump_categories(guild)
 
