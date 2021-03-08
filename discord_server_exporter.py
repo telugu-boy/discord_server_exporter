@@ -22,6 +22,7 @@ import os
 import discord
 import time
 from urllib.request import Request, urlopen
+import threading
 
 req_hdr = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.104 Safari/537.36",
@@ -94,6 +95,44 @@ def conv_emoji_obj(emoji: discord.Emoji) -> dict:
     res["url"] = str(emoji.url)
     return res
 
+"""
+Return a list of the emojis in a guild as a bytes-like object
+
+Arguments:
+    guild -- a discord.py guild object
+"""
+
+def get_emoji_bytes(guild: discord.Guild) -> list:
+  res_emojis = []
+  for emoji in guild.emojis:
+    logging.info(f"Downloading emoji '{emoji.name}' from server '{guild.name}'")
+    req = Request(str(emoji.url), None, req_hdr)
+    server_icon_req = urlopen(req)
+
+    # gets extension of the icon from the url
+    icon_ext = str(emoji.url).split(".")[-1].split("?")[0]
+
+    res_emojis.append(server_icon_req.read())
+  return res_emojis
+
+"""
+Write a list of emojis from a guild to a directory
+
+Arguments:
+    guild -- a discord.py guild object
+"""
+def write_emojis_to_dir(guild: discord.Guild, dir_prefix=f"server_emojis_{time.time()}", dir_name=None):
+    if not dir_name:
+        dir_name = guild.id
+    os.makedirs(f"{dir_prefix}/{dir_name}")
+    emojis_bytes = get_emoji_bytes(guild)
+    for idx, emoji in enumerate(guild.emojis):
+        emoji_bytes = emojis_bytes[idx]
+        icon_ext = str(emoji.url).split(".")[-1].split("?")[0]
+        with open(f"{dir_prefix}/{dir_name}/{emoji.name}.{icon_ext}", "wb") as f:
+            f.write(emoji_bytes)
+            
+    logging.info(f"Finished writing emojis from server '{guild.name}'")
 
 """
 Return a list of roles of emojis in the guild.
@@ -104,26 +143,15 @@ Arguments:
 """
 
 
-def dump_emojis(guild: discord.Guild, export_emojis=False, dir_prefix=None) -> list:
+def dump_emojis(guild: discord.Guild, export_emojis=False, dir_prefix=f"server_emojis_{time.time()}") -> list:
     logging.info(f"Dumping emojis for server '{guild.name}'")
     res = []
     if export_emojis:
-        # seperates different exports by appending a unix timestamp
-        emoji_location = f"{dir_prefix}/{guild.id}"
-        os.makedirs(emoji_location)
-
+        thread = threading.Thread(target=write_emojis_to_dir, args=(guild, dir_prefix))
+        thread.daemon = True
+        thread.start()
     for emoji in guild.emojis:
         res.append(conv_emoji_obj(emoji))
-        if export_emojis:
-            logging.info(f"Downloading emoji '{emoji.name}' for server '{guild.name}'")
-            req = Request(str(emoji.url), None, req_hdr)
-            server_icon_req = urlopen(req)
-
-            # gets extension of the icon from the url
-            icon_ext = str(emoji.url).split(".")[-1].split("?")[0]
-
-            with open(f"{emoji_location}/{emoji.name}.{icon_ext}", "wb") as f:
-                f.write(server_icon_req.read())
     return res
 
 
@@ -462,7 +490,7 @@ Arguments:
 """
 
 
-def dump_server(guild: discord.Guild, export_emojis=True, export_members=False) -> dict:
+def dump_server(guild: discord.Guild, export_emojis=True, export_emojis_dir="exported_emojis", export_members=False) -> dict:
     logging.info(f"Dumping server '{guild.name}'")
     res = {}
 
@@ -487,7 +515,7 @@ def dump_server(guild: discord.Guild, export_emojis=True, export_members=False) 
     res["default_notifications"] = bool(guild.default_notifications.value)
     res["verification_level"] = guild.verification_level.value
     res["content_filter"] = guild.explicit_content_filter.value
-    res["emojis"] = dump_emojis(guild, export_emojis, f"exported_emojis_{int(time.time())}")
+    res["emojis"] = dump_emojis(guild, export_emojis, export_emojis_dir)
     res["roles"] = dump_roles(guild)
     res["categories"] = dump_categories(guild)
 

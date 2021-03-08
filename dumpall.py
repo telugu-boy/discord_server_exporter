@@ -37,6 +37,7 @@ IS_BOT_TOKEN = False
 import os
 import re
 import json
+import time
 import logging
 
 import discord
@@ -63,9 +64,10 @@ async def on_ready():
         os.mkdir("my_servers")
 
     servers = []
+    export_emojis_dir = f"exported_emojis_{int(time.time())}"
     for gld in bot.guilds:
         biswas = dse.dump_server(
-            gld
+            gld, export_emojis_dir=export_emojis_dir
         )  # Exporting members does not work due to intents      "
         servers.append(biswas)
         srv_name_clean = re.sub(
