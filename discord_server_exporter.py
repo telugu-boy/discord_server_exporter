@@ -23,15 +23,9 @@ import discord
 import time
 from urllib.request import Request, urlopen
 import threading
+import json
 
-req_hdr = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.104 Safari/537.36",
-    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-    "Accept-Charset": "ISO-8859-1,utf-8;q=0.7,*;q=0.3",
-    "Accept-Encoding": "gzip, deflate, br",
-    "Accept-Language": "en-US,en;q=0.9",
-    "Connection": "keep-alive",
-}
+from ds_common_funcs import req_hdr, get_icon_under_10mb
 
 """
 Maps a role to a dictionary that conforms to the role schema.
@@ -55,7 +49,7 @@ def conv_role_obj(role: discord.Role, export_perms=True) -> dict:
     # this is the permission integer
     if export_perms:
         logging.info(
-            f"Dumping role permissions for role '{role.name}' in '{role.guild.name}'"
+            f"Dumping role permissions for role '{role.name}' for server '{role.guild.name}'"
         )
         res["permission_value"] = str(role.permissions.value)
     return res
@@ -121,15 +115,14 @@ Write a list of emojis from a guild to a directory
 Arguments:
     guild -- a discord.py guild object
 """
-def write_emojis_to_dir(guild: discord.Guild, dir_prefix=f"server_emojis_{time.time()}", dir_name=None):
-    if not dir_name:
-        dir_name = guild.id
-    os.makedirs(f"{dir_prefix}/{dir_name}")
+def write_emojis_to_dir(guild: discord.Guild, dir_prefix="exported"):
+    guild_emoji_folder_path = f"{dir_prefix}/emojis/{guild.id}"
+    os.makedirs(guild_emoji_folder_path)
     emojis_bytes = get_emoji_bytes(guild)
     for idx, emoji in enumerate(guild.emojis):
         emoji_bytes = emojis_bytes[idx]
         icon_ext = str(emoji.url).split(".")[-1].split("?")[0]
-        with open(f"{dir_prefix}/{dir_name}/{emoji.name}.{icon_ext}", "wb") as f:
+        with open(f"{guild_emoji_folder_path}/{emoji.name}.{icon_ext}", "wb") as f:
             f.write(emoji_bytes)
             
     logging.info(f"Finished writing emojis from server '{guild.name}'")
@@ -143,7 +136,7 @@ Arguments:
 """
 
 
-def dump_emojis(guild: discord.Guild, export_emojis=False, dir_prefix=f"server_emojis_{time.time()}") -> list:
+def dump_emojis(guild: discord.Guild, export_emojis=False, dir_prefix="exported") -> list:
     logging.info(f"Dumping emojis for server '{guild.name}'")
     res = []
     if export_emojis:
@@ -478,19 +471,33 @@ def dump_members(guild: discord.Guild, export_nickname=True, export_roles=True) 
         res.append(conv_member_obj(member, export_nickname, export_roles))
     return res
 
+"""
+
+"""
+def dump_server_icon(guild: discord.Guild, dir_prefix="exported"):
+    logging.info(f"Downloading server icon for server '{guild.name}'")
+    iconurl = str(guild.icon_url)
+
+    if not iconurl:
+        return
+        
+    icon = get_icon_under_10mb(iconurl)
+    with open(f"{dir_prefix}/icons/{guild.id}.{icon[1]}", "wb") as f:
+        f.write(icon[0])
+
 
 """
 Return a dict object representing a single server.
 The schema for server is in the schemas folder, as with all other relevant structures
 
-WARNING: Exporting members may increase the size of the export considerably.
+WARNING: Exporting members may increase the size of the resulting dictionary considerably.
 
 Arguments:
     guild -- a discord.py guild object
 """
 
 
-def dump_server(guild: discord.Guild, export_emojis=True, export_emojis_dir="exported_emojis", export_members=False) -> dict:
+def dump_server(guild: discord.Guild, export_emojis=True, export_server_icon=True, export_schemas=True, export_files_dir="exported", export_members=False) -> dict:
     logging.info(f"Dumping server '{guild.name}'")
     res = {}
 
@@ -515,11 +522,20 @@ def dump_server(guild: discord.Guild, export_emojis=True, export_emojis_dir="exp
     res["default_notifications"] = bool(guild.default_notifications.value)
     res["verification_level"] = guild.verification_level.value
     res["content_filter"] = guild.explicit_content_filter.value
-    res["emojis"] = dump_emojis(guild, export_emojis, export_emojis_dir)
+    res["emojis"] = dump_emojis(guild, export_emojis, export_files_dir)
     res["roles"] = dump_roles(guild)
     res["categories"] = dump_categories(guild)
 
     if export_members:
         res["members"] = dump_members(guild)
+
+    if export_server_icon:
+        os.makedirs(f"{export_files_dir}/icons", exist_ok=True)
+        dump_server_icon(guild, export_files_dir)
+
+    if export_schemas:
+        os.makedirs(f"{export_files_dir}/schemas", exist_ok=True)
+        with open(f"{export_files_dir}/schemas/{guild.id}.json", "w") as f:
+            json.dump(res, f)
 
     return res

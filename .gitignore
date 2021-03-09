@@ -128,12 +128,10 @@ dmypy.json
 .vs/
 *.pyproj
 *.sln
-.replit
 
 # Bot token file
 token.txt
 *.user
 
-# Exported servers/emojis
+# Exported servers
 my_servers/
-exported_emojis*/
