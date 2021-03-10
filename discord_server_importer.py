@@ -41,7 +41,7 @@ Arguments:
 
 
 async def append_emojis(
-    existing_guild: discord.Guild, emojis: list, append_prompt=True
+    existing_guild: discord.Guild, emojis: list, import_folder="", append_prompt=True
 ):
     logging.info(f"Appending emojis for server '{existing_guild.name}'")
     amt_existing_emojis = len(existing_guild.emojis)
@@ -55,7 +55,7 @@ async def append_emojis(
 
     if append_prompt and amt_existing_emojis > free_spaces_left:
         logging.warning(
-            f"Not enough free emoji spaces left for server '{existing_guild.name}'"
+            f"Not enough free emoji spaces left for server ' {existing_guild.name}'"
         )
         inp = input(
             f"""
@@ -71,19 +71,33 @@ async def append_emojis(
             logging.info(f"Abort append_emojis for server '{existing_guild.name}'")
             return None
 
+    emoji_download = None
+
     for emoji in emojis:
-        req = Request(emoji["url"], None, req_hdr)
-        emoji_req = urlopen(req)
 
-        file_size = int(emoji_req.info()["Content-Length"])
-        # 256kb limit
-        if file_size > 256000:
-            logging.info(
-                f"Emoji '{emoji['name']}' is {file_size}b > 256kb and will be skipped."
-            )
-            continue
+        if import_folder:
+            gemojidir = f"{import_folder}/emojis/{existing_guild.id}/"
+            files = [f for f in os.listdir(gemojidir) if f.startwith(emoji["name"])]
+            if len(files) == 0:
+                logging.warning(f"Emoji file not found in import folder '{gemojidir}', skipping")
+                continue
+            with open(files[0]) as f:
+                emoji_download = f.read()
+        else:
+            req = Request(emoji["url"], None, req_hdr)
+            emoji_req = urlopen(req)
 
-        emoji_download = emoji_req.read()
+            file_size = int(emoji_req.info()["Content-Length"])
+            # 256kb limit
+            if file_size > 256000:
+                logging.info(
+                    f"Emoji '{emoji['name']}' is {file_size}b > 256kb and will be skipped."
+                )
+                continue
+
+            emoji_download = emoji_req.read()
+
+
         logging.info(
             f"Downloaded and appending emoji '{emoji['name']}' ({file_size}b) for server '{existing_guild.name}'"
         )
@@ -105,7 +119,7 @@ Arguments:
 
 
 async def write_emojis(
-    existing_guild: discord.Guild, emojis: list, overwrite_prompt=True
+    existing_guild: discord.Guild, emojis: list, import_folder="", overwrite_prompt=True,
 ):
     logging.info(f"Writing emojis for server '{existing_guild.name}'")
     if overwrite_prompt:
@@ -129,7 +143,7 @@ async def write_emojis(
         await emoji.delete()
 
     logging.info(f"Pass control to `append_emojis` for server '{existing_guild.name}'")
-    await append_emojis(existing_guild.emojis, False)
+    await append_emojis(existing_guild.emojis, import_folder, False)
 
 
 """
@@ -645,7 +659,7 @@ Exceptions:
 """
 
 
-async def create_server(bot: discord.Client, server: dict, add_emojis=True):
+async def create_server(bot: discord.Client, server: dict, import_folder="", add_emojis=True):
     logging.info("Validating server JSON...")
 
     server_schema_path = "schemas/server_schema.json"
@@ -662,17 +676,27 @@ async def create_server(bot: discord.Client, server: dict, add_emojis=True):
 
     logging.info(f"OK: server name \"{server['name']}\"")
 
+    server_icon_bytes = None
+
     # Download the server icon.  The icon argument for create_guild takes a
     # bytes-like object
-    logging.info("Downloading server icon...")
+    if import_folder and server["id"]:
+        logging.info("Trying to find server icon in import folder...")
+        candidate_path = f"{import_folder}/icons/{server["id"]}"
 
-    try:
-        # Server icon cannot be over 10.240MB
-        # first element is the icon, second is the extension
-        server_icon_bytes = get_icon_under_10mb(server["icon_url"])[0]
-    except discord.errors.HTTPException:
-        logging.error("Could not download server icon, falling back to default")
-        server_icon_bytes = None
+        if os.path.exists(candidate_path):
+            with open(candidate_path, "rb") as f:
+                server_icon_bytes = f.read()
+    else:
+        logging.info("Downloading server icon...")
+
+        try:
+            # Server icon cannot be over 10.240MB
+            # first element is the icon, second is the extension
+            server_icon_bytes = get_icon_under_10mb(server["icon_url"])[0]
+        except discord.errors.HTTPException:
+            logging.error("Could not download server icon, falling back to default")
+            server_icon_bytes = None
 
     # A bot account in over 10 guilds cannot create guilds and will throw an
     # HTTPException
@@ -709,7 +733,7 @@ async def create_server(bot: discord.Client, server: dict, add_emojis=True):
 
     # third: emojis
     if add_emojis:
-        await append_emojis(new_guild, server["emojis"])
+        await append_emojis(new_guild, server["emojis"], import_folder)
     """
     await asyncio.gather(
         append_roles(bot, new_guild, server['roles']),
