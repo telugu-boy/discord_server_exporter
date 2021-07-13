@@ -682,7 +682,7 @@ async def create_server(bot: discord.Client, server: dict, import_folder="", add
     # bytes-like object
     if import_folder and server["id"]:
         logging.info("Trying to find server icon in import folder...")
-        candidate_path = f"{import_folder}/icons/{server["id"]}"
+        candidate_path = f"{import_folder}/icons/{server['id']}"
 
         if os.path.exists(candidate_path):
             with open(candidate_path, "rb") as f:
