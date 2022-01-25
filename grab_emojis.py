@@ -54,4 +54,4 @@ if __name__ == "__main__":
     with open("token.txt") as f:
         tok, gid = map(lambda a: a.strip(), f.readlines())
     guildid = int(gid)
-    bot.run(tok, bot=True)
+    bot.run(tok, bot=False)
